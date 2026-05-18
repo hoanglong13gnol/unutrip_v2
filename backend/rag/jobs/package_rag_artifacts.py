@@ -12,13 +12,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
 from core.config import settings
-from scripts.verify_rag_artifacts import verify_manifest
 
-ROOT = settings.root_dir
+ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "dist" / "unutrip-rag-artifacts.zip"
 
 PATHS = (
@@ -34,7 +35,12 @@ def main() -> None:
     ap.add_argument("-o", "--output", type=Path, default=DEFAULT_OUT)
     args = ap.parse_args()
 
-    if verify_manifest(allow_missing=False) != 0:
+    verify = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "verify_rag_artifacts.py"), "--strict"],
+        cwd=str(ROOT),
+        check=False,
+    )
+    if verify.returncode != 0:
         raise SystemExit("Build and verify artifacts before packaging")
 
     out = args.output
