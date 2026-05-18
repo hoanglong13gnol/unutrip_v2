@@ -1,3 +1,2 @@
-# Optional Phase 5 cross-encoder rerank (not required for CI / default runtime).
--r requirements.txt
-sentence-transformers>=3.0.0,<4
+# Optional cross-encoder rerank — install: pip install -e ".[rerank]"
+-e ".[rerank]"

@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.schemas.itinerary import ItineraryPreviewRequest
+from core.text_normalization import normalize_text
 from services.itinerary.catalog import get_tags_text
 from services.itinerary.category import app_category_from_rag
-from services.itinerary.text_utils import normalize_text
 
 
 def build_sync_query(request: ItineraryPreviewRequest) -> str:

@@ -7,11 +7,14 @@ FastAPI retrieval + generation API. Layout:
 | `app/routers/` | HTTP: `rag`, `health`, `admin/*`, `ai_itinerary` |
 | `app/schemas/` | Request models (`rag`, `itinerary`) |
 | `services/` | `RagService`, `ItineraryService`, `services/admin/*` |
-| `pipelines/` | Orchestration (`RagPipeline`) |
+| `pipelines/` | Orchestration (`RagPipeline`), `response_builder`, `request_logger` |
+| `pipelines/policies/` | `LocationFilter`, `GenerationRouter` |
+| `providers/` | Gemini + template answer adapters (`llm/` remains implementation) |
 | `retrieval/` | BM25, hybrid retrieval, intent, place store |
+| `retrieval/scoring/` | Travel-rule scoring, result dedup |
 | `generation/` | Context + prompt builders |
 | `llm/` | Gemini client + response cache |
-| `core/` | Config, security, Redis, artifacts |
+| `core/` | Config, security, Redis, artifacts, text normalization |
 | `domain/` | Domain Pydantic models |
 
 ## Local setup
@@ -20,19 +23,33 @@ FastAPI retrieval + generation API. Layout:
 cd backend/rag
 python -m venv .venv
 .venv\Scripts\activate   # Windows
-pip install -r requirements.txt -r requirements-dev.txt
-pip install --no-deps -e .
+pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8001
 ```
 
 Scripts and tests require editable install (`pip install -e .`) so imports resolve without `sys.path` hacks.
 
-## Quality (Phase 3–5)
+## Dev hygiene
 
 ```bash
-ruff check app core domain generation llm pipelines retrieval services tests scripts
+make clean          # hoặc: python scripts/clean_dev_artifacts.py
+```
+
+## Quality (Phase 3–6 + C)
+
+```bash
+make quality   # ruff + mypy + pytest (coverage ≥70%) + verify artifacts
+make typecheck # mypy: core, domain, generation, providers, pipelines
+make test-fast # pytest without coverage
+
+ruff check app core domain generation llm pipelines providers retrieval services tests scripts
 python jobs/build_rag_artifacts.py --from-fixture
-python -m pytest tests/ -q
+python -m pytest tests/ -q   # coverage gate 70% (see pyproject.toml [tool.coverage.run] omit)
+```
+
+Pre-commit (optional): `pip install pre-commit && pre-commit install` from `backend/rag/`.
+
+```bash
 python scripts/verify_rag_artifacts.py
 python scripts/eval_rag_retrieval.py --golden eval/golden_queries_ci.json --ci \
   --require-labels --min-province-accuracy 1.0 --min-hit-at5 0.75

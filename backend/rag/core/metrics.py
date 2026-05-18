@@ -35,9 +35,9 @@ try:
     _PROMETHEUS_AVAILABLE = True
 except ImportError:
     _PROMETHEUS_AVAILABLE = False
-    HTTP_REQUESTS = None  # type: ignore[assignment]
-    HTTP_LATENCY = None  # type: ignore[assignment]
-    GEMINI_REQUESTS = None  # type: ignore[assignment]
+    HTTP_REQUESTS = None
+    HTTP_LATENCY = None
+    GEMINI_REQUESTS = None
     CONTENT_TYPE_LATEST = "text/plain"
 
 

@@ -7,11 +7,13 @@ ENV PYTHONPATH=/svc \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-COPY requirements.txt pyproject.toml ./
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml README.md ./
+COPY app core domain generation llm pipelines providers retrieval services ./
 
-COPY . .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir .
+
+COPY jobs scripts eval data ./ 
 RUN pip install --no-cache-dir --no-deps -e .
 
 EXPOSE 8001

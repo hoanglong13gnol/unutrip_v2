@@ -23,19 +23,28 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: |
-            backend/rag/requirements.txt
-            backend/rag/requirements-dev.txt
+          cache-dependency-path: backend/rag/pyproject.toml
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt && pip install --no-deps -e .
+        run: pip install -e ".[dev]"
       - name: Ruff lint
-        run: ruff check app core domain generation llm pipelines retrieval services tests scripts
+        run: ruff check app core domain generation llm pipelines providers retrieval services tests scripts
+      - name: Mypy (core packages)
+        run: python -m mypy --explicit-package-bases -p core -p domain -p generation -p providers -p pipelines
       - name: Import app
         run: python -c "from app.main import app; print(app.title)"
       - name: Build CI fixture artifacts
         run: python jobs/build_rag_artifacts.py --from-fixture
-      - name: Unit, API & retrieval tests
+      - name: Unit, API & retrieval tests (coverage gate 70%)
         run: python -m pytest tests/ -q
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-coverage
+          path: backend/rag/.coverage
+          if-no-files-found: ignore
+      - name: Docker build
+        run: docker build -t unutrip-rag:ci .
       - name: Verify artifacts (strict)
         run: python scripts/verify_rag_artifacts.py --strict
       - name: Offline eval (fixture golden set)

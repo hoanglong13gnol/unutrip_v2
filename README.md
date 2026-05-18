@@ -20,6 +20,6 @@ Bản thư mục này chỉ giữ **mã nguồn và cấu hình vận hành** đ
 
 ## Chạy nhanh
 
-Giống monorepo gốc: copy `.env.example` → `.env`, `npm ci` trong `backend/nodejs`, venv + `pip install -r requirements.txt -r requirements-dev.txt && pip install --no-deps -e .` trong `backend/rag` (xem `backend/rag/README.md`), Gradle/Android như cũ.
+Giống monorepo gốc: copy `.env.example` → `.env`, `npm ci` trong `backend/nodejs`, venv + `pip install -e ".[dev]"` trong `backend/rag` (xem `backend/rag/README.md`), Gradle/Android như cũ.
 
 Demo gốc (`e:\UNUtrip`) **không bị sửa**; mọi thay đổi v2 làm trên thư mục này.

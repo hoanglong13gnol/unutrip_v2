@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "built_at_utc": "2026-05-14T18:34:07.502726+00:00",
+  "built_at_utc": "2026-05-18T18:09:12.302489+00:00",
   "api_version": "0.3.0",
-  "corpus_path": "data/processed/places_rag_documents.jsonl",
-  "corpus_sha256": "8f46e2f84dd08efaaae15a8a99446280f39e730340adff03dba8d812b11997b6",
-  "bm25_index_path": "data/indexes/bm25_index.pkl",
-  "bm25_sha256": "6029f66e2b493cf67477e6c2d55f9d6d59808cfb2053ba46d9489a917a4c88e3",
-  "document_count": 22368,
+  "corpus_path": "E:\\UNUtrip_v2\\backend\\rag\\data\\processed\\places_rag_documents.jsonl",
+  "corpus_sha256": "5310136d47a07b48128ff12ca89960f9166e35e7b540fec9d959b8cb1efbdc1e",
+  "bm25_index_path": "E:\\UNUtrip_v2\\backend\\rag\\data\\indexes\\bm25_index.pkl",
+  "bm25_sha256": "74c33c8c57cf150525c255aad319fbd8e1cdec1486350feba2237f695a695598",
+  "document_count": 10,
   "tfidf_enabled": true,
-  "tfidf_min_df": 2
+  "tfidf_min_df": 1
 }

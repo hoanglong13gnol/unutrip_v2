@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.text_normalization import normalize_text
 from services.itinerary.catalog import get_raw_place_id, get_tags_text
-from services.itinerary.text_utils import normalize_text
 
 
 def app_category_from_rag(place: dict[str, Any]) -> str:
