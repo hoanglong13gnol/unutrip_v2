@@ -1,13 +1,15 @@
 """
 Upload production RAG bundle zip to a GitHub Release (asset URL for RAG_ARTIFACT_BUNDLE_URL).
 
-Requires: GITHUB_TOKEN (classic PAT or fine-grained with Contents: Read and write)
-Scope: repo releases.
+Requires GITHUB_TOKEN with permission to create releases and upload assets:
+  - Classic PAT: scope ``repo`` (full control of private repositories)
+  - Fine-grained PAT: Repository ``Contents`` = Read and write, repo = unutrip_v2
 
 Usage:
   set GITHUB_TOKEN=ghp_...
+  python scripts/upload_rag_bundle_github.py --check
   python scripts/upload_rag_bundle_github.py
-  python scripts/upload_rag_bundle_github.py --zip backend/rag/dist/unutrip-rag-artifacts-prod.zip --tag rag-artifacts-2026-05-19
+  python scripts/upload_rag_bundle_github.py --use-gh
 """
 
 from __future__ import annotations
@@ -16,14 +18,44 @@ import argparse
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import urllib.error
 import urllib.request
+import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ZIP = ROOT / "backend" / "rag" / "dist" / "unutrip-rag-artifacts-prod.zip"
 API_VERSION = "2022-11-28"
+
+PERM_HELP = """
+GitHub returned 403 — token cannot CREATE releases or upload assets.
+
+Fix (pick one):
+
+  A) Classic PAT (recommended for personal repos)
+     https://github.com/settings/tokens/new
+     - Expiration: as you prefer
+     - Scopes: check "repo" (Full control of private repositories)
+     - Token starts with ghp_
+
+  B) Fine-grained PAT
+     https://github.com/settings/personal-access-tokens?type=beta
+     - Repository access: Only "unutrip_v2" (or this repository)
+     - Repository permissions -> Contents: Read and write  (NOT read-only)
+     - Token starts with github_pat_
+
+Then:
+  $env:GITHUB_TOKEN = "ghp_...."
+  python scripts/upload_rag_bundle_github.py --check
+  python scripts/upload_rag_bundle_github.py
+
+Or upload manually (no token write needed):
+  https://github.com/hoanglong13gnol/unutrip_v2/releases/new
+  Attach: backend/rag/dist/unutrip-rag-artifacts-prod.zip
+"""
 
 
 def _request(
@@ -33,7 +65,7 @@ def _request(
     *,
     data: bytes | None = None,
     headers: dict[str, str] | None = None,
-) -> dict:
+) -> tuple[dict, dict[str, str]]:
     hdrs = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
@@ -47,24 +79,90 @@ def _request(
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             body = resp.read().decode("utf-8")
-            return json.loads(body) if body else {}
+            resp_headers = {k.lower(): v for k, v in resp.headers.items()}
+            parsed = json.loads(body) if body else {}
+            return parsed, resp_headers
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"GitHub API {exc.code} {method} {url}: {detail}") from exc
 
 
 def _parse_remote(remote: str) -> tuple[str, str]:
-    # https://github.com/owner/repo.git
     m = re.search(r"github\.com[:/]([^/]+)/([^/.]+)", remote)
     if not m:
         raise ValueError(f"Cannot parse GitHub owner/repo from: {remote}")
     return m.group(1), m.group(2)
 
 
+def _git_remote_url(remote: str) -> str:
+    return subprocess.check_output(
+        ["git", "remote", "get-url", remote],
+        cwd=ROOT,
+        text=True,
+    ).strip()
+
+
+def _token_hint(token: str) -> str:
+    if token.startswith("github_pat_"):
+        return "fine-grained (github_pat_*)"
+    if token.startswith("ghp_"):
+        return "classic (ghp_*)"
+    return "unknown type"
+
+
+def check_token_permissions(token: str, owner: str, repo: str) -> bool:
+    print(f"Token type: {_token_hint(token)}")
+
+    _, headers = _request("GET", "https://api.github.com/user", token)
+    scopes = headers.get("x-oauth-scopes", "")
+    if scopes:
+        print(f"OAuth scopes (classic): {scopes}")
+        if "repo" not in scopes and "public_repo" not in scopes:
+            print("WARN: classic token missing 'repo' scope")
+
+    _request("GET", f"https://api.github.com/repos/{owner}/{repo}/releases", token)
+    print("OK  list releases (read)")
+
+    test_tag = f"rag-perm-check-{uuid.uuid4().hex[:8]}"
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases"
+    payload = json.dumps(
+        {
+            "tag_name": test_tag,
+            "name": "permission check (delete me)",
+            "body": "Automated token check from upload_rag_bundle_github.py",
+            "draft": True,
+            "prerelease": True,
+            "target_commitish": "master",
+        }
+    ).encode("utf-8")
+    try:
+        release, _ = _request("POST", url, token, data=payload)
+    except RuntimeError as exc:
+        if "403" in str(exc):
+            print("FAIL create release (write) — this is why upload fails.")
+            print(PERM_HELP)
+            return False
+        raise
+
+    release_id = release.get("id")
+    print(f"OK  create draft release (write) id={release_id}")
+
+    if release_id:
+        del_url = f"https://api.github.com/repos/{owner}/{repo}/releases/{release_id}"
+        try:
+            _request("DELETE", del_url, token)
+            print("OK  deleted permission-check release")
+        except RuntimeError:
+            print(f"WARN: delete test release manually: tag {test_tag}")
+
+    return True
+
+
 def _get_release_by_tag(token: str, owner: str, repo: str, tag: str) -> dict | None:
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
     try:
-        return _request("GET", url, token)
+        release, _ = _request("GET", url, token)
+        return release
     except RuntimeError as exc:
         if "404" in str(exc):
             return None
@@ -80,9 +178,11 @@ def _create_release(token: str, owner: str, repo: str, tag: str, title: str, bod
             "body": body,
             "draft": False,
             "prerelease": True,
+            "target_commitish": "master",
         }
     ).encode("utf-8")
-    return _request("POST", url, token, data=payload)
+    release, _ = _request("POST", url, token, data=payload)
+    return release
 
 
 def _upload_asset(token: str, upload_url: str, zip_path: Path) -> dict:
@@ -109,17 +209,113 @@ def _upload_asset(token: str, upload_url: str, zip_path: Path) -> dict:
         raise RuntimeError(f"Upload failed {exc.code}: {detail}") from exc
 
 
+def _find_gh() -> str | None:
+    for name in ("gh", "gh.exe"):
+        path = shutil.which(name)
+        if path:
+            return path
+    program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+    candidate = Path(program_files) / "GitHub CLI" / "gh.exe"
+    if candidate.is_file():
+        return str(candidate)
+    return None
+
+
+def upload_via_gh(
+    token: str,
+    owner: str,
+    repo: str,
+    tag: str,
+    zip_path: Path,
+    title: str,
+    body: str,
+) -> str:
+    gh = _find_gh()
+    if not gh:
+        raise RuntimeError("gh CLI not found; install GitHub CLI or use API upload")
+
+    full_repo = f"{owner}/{repo}"
+    env = {**os.environ, "GH_TOKEN": token, "GITHUB_TOKEN": token}
+
+    subprocess.run(
+        [
+            gh,
+            "release",
+            "create",
+            tag,
+            str(zip_path),
+            "--repo",
+            full_repo,
+            "--prerelease",
+            "--title",
+            title,
+            "--notes",
+            body,
+        ],
+        check=True,
+        env=env,
+        cwd=ROOT,
+    )
+
+    out = subprocess.check_output(
+        [gh, "release", "view", tag, "--repo", full_repo, "--json", "assets"],
+        text=True,
+        env=env,
+    )
+    assets = json.loads(out).get("assets", [])
+    for asset in assets:
+        if asset.get("name") == zip_path.name:
+            return asset.get("browser_download_url", "")
+    raise RuntimeError("Release created but asset URL not found")
+
+
+def upload_via_api(
+    token: str,
+    owner: str,
+    repo: str,
+    tag: str,
+    zip_path: Path,
+    title: str,
+    body: str,
+) -> str:
+    release = _get_release_by_tag(token, owner, repo, tag)
+    if release is None:
+        try:
+            release = _create_release(token, owner, repo, tag, title, body)
+            print(f"Created release {tag}")
+        except RuntimeError as exc:
+            if "403" in str(exc):
+                print(str(exc), file=sys.stderr)
+                print(PERM_HELP, file=sys.stderr)
+                sys.exit(1)
+            raise
+    else:
+        print(f"Using existing release {tag} (id={release['id']})")
+
+    asset = _upload_asset(token, release["upload_url"], zip_path)
+    return str(asset.get("browser_download_url", ""))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--zip", type=Path, default=DEFAULT_ZIP)
     ap.add_argument("--tag", default="", help="Release tag (default: rag-artifacts-YYYY-MM-DD)")
     ap.add_argument("--remote", default="origin", help="Git remote name")
+    ap.add_argument("--check", action="store_true", help="Only verify token can create releases")
+    ap.add_argument("--use-gh", action="store_true", help="Use gh CLI instead of REST API")
     args = ap.parse_args()
 
     token = os.getenv("GITHUB_TOKEN", "").strip()
     if not token:
-        print("ERROR: set GITHUB_TOKEN (repo scope, Contents read/write)", file=sys.stderr)
+        print("ERROR: set GITHUB_TOKEN", file=sys.stderr)
+        print(PERM_HELP, file=sys.stderr)
         sys.exit(1)
+
+    owner, repo = _parse_remote(_git_remote_url(args.remote))
+
+    if args.check:
+        ok = check_token_permissions(token, owner, repo)
+        sys.exit(0 if ok else 1)
 
     zip_path = args.zip.resolve()
     if not zip_path.is_file():
@@ -127,24 +323,20 @@ def main() -> None:
         print("Run: .\\scripts\\publish_rag_bundle.ps1", file=sys.stderr)
         sys.exit(1)
 
-    import subprocess
-
-    remote_url = subprocess.check_output(
-        ["git", "remote", "get-url", args.remote],
-        cwd=ROOT,
-        text=True,
-    ).strip()
-    owner, repo = _parse_remote(remote_url)
-
     meta_path = zip_path.with_name(zip_path.name + ".RELEASE.json")
     doc_count = "?"
     zip_sha = "?"
     if meta_path.is_file():
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         doc_count = meta.get("document_count", "?")
-        zip_sha = meta.get("zip_sha256", "?")[:16]
+        zip_sha = str(meta.get("zip_sha256", "?"))[:16]
+        if isinstance(doc_count, int) and doc_count < 100:
+            print(
+                f"WARN: zip has only {doc_count} documents — run publish_rag_bundle.ps1 without -SkipBuild",
+                file=sys.stderr,
+            )
 
-    from datetime import UTC, date
+    from datetime import date
 
     tag = args.tag.strip() or f"rag-artifacts-{date.today().isoformat()}"
     title = f"RAG artifacts ({doc_count} docs)"
@@ -152,21 +344,18 @@ def main() -> None:
         f"Production BM25 bundle for UnuTrip RAG.\n\n"
         f"- Documents: {doc_count}\n"
         f"- SHA256: `{zip_sha}...`\n\n"
-        f"Deploy:\n"
-        f"```env\nRAG_ARTIFACT_BUNDLE_URL=<browser_download_url below>\n```\n"
+        f"Set `RAG_ARTIFACT_BUNDLE_URL` to the release asset URL."
     )
 
-    release = _get_release_by_tag(token, owner, repo, tag)
-    if release is None:
-        release = _create_release(token, owner, repo, tag, title, body)
-        print(f"Created release {tag}")
-    else:
-        print(f"Using existing release {tag} (id={release['id']})")
+    if not check_token_permissions(token, owner, repo):
+        sys.exit(1)
 
-    upload_url = release["upload_url"]
-    asset = _upload_asset(token, upload_url, zip_path)
-    browser_url = asset.get("browser_download_url", "")
-    print(f"Uploaded: {asset.get('name')} ({asset.get('size')} bytes)")
+    if args.use_gh:
+        browser_url = upload_via_gh(token, owner, repo, tag, zip_path, title, body)
+    else:
+        browser_url = upload_via_api(token, owner, repo, tag, zip_path, title, body)
+
+    print(f"Uploaded: {zip_path.name}")
     print(f"browser_download_url={browser_url}")
     print("\nSet in deploy .env:")
     print(f"RAG_ARTIFACT_BUNDLE_URL={browser_url}")
