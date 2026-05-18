@@ -81,12 +81,6 @@ omit = [
     "services/itinerary/builder.py",
     "services/itinerary/catalog.py",
     "services/itinerary/scoring.py",
-    "retrieval/place_store.py",
-    "retrieval/bm25_retriever.py",
-    "retrieval/hybrid_retriever.py",
-    "retrieval/rerank.py",
-    "retrieval/logger.py",
-    "retrieval/fusion.py",
 ]
 
 [tool.coverage.report]

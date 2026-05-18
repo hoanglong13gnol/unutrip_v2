@@ -18,7 +18,7 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Phase E — Deploy / observability | 🟡 Một phần (checklist + Prometheus rules mẫu) |
 | Phase 8 — Android polish | ⏳ Chưa |
 
-**Chất lượệ hiện tại:** 88+ pytest pass · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
+**Chất lượệ hiện tại:** 110 pytest pass · coverage **~79%** · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
 
 ---
 
@@ -54,6 +54,14 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Pre-commit | `backend/rag/.pre-commit-config.yaml` (ruff, mypy, pytest pre-push) |
 | CI `rag-ci.yml` | Mypy, coverage, upload `.coverage`, `docker build` |
 | Coverage omit | Admin/itinerary nặng, `rag_pipeline` integration, BM25/hybrid — xem `pyproject.toml` |
+
+### P3b — Retrieval coverage (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| Tests | `test_place_store`, `test_bm25_retriever`, `test_hybrid_retriever_edges`, `test_ai_request_logger`, `test_rerank_edges` |
+| Coverage omit | Bỏ toàn bộ `retrieval/*` khỏi omit (trừ phần đã gộp vào scoring) |
+| Tổng | 110 tests, ~79% cov |
 
 ### P3 — Coverage & mypy mở rộng (mới)
 
@@ -138,7 +146,8 @@ tests/test_pipeline_city_match.py
 ### Chất lượng code (trung bình)
 
 - [x] Test `rag_pipeline` unit (mocked) + `request_logger`
-- [ ] Tiếp bỏ omit: `place_store`, `hybrid_retriever`, admin services
+- [x] Bỏ omit retrieval: `place_store`, `bm25`, `hybrid`, `fusion`, `logger`, `rerank`
+- [ ] Tiếp: admin/itinerary services, `travel_rules` branch coverage
 - [x] `travel_rules` golden tests (`test_travel_rules_golden.py`)
 - [x] Mypy: `repositories`, `retrieval.scoring` (chưa full `retrieval/` / `app/`)
 - [x] `repositories/artifact_store.py` — artifact loader (align `RAG_ARCHITECTURE.md`)
