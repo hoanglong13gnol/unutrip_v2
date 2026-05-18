@@ -1,9 +1,8 @@
 # UNUtrip v2 — Làm sạch & nâng cấp RAG (v2 roadmap)
 
-Tài liệu theo dõi **Phase A → C** (refactor kiến trúc + chất lượệ) trên `backend/rag/`.  
+Tài liệu theo dõi refactor **Phase A–E** và **P0–P3b** trên monorepo v2.  
+**Bàn giao agent:** [`docs/v2/AGENT_GUIDE.md`](docs/v2/AGENT_GUIDE.md) (tóm tắt + checklist PR).  
 Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip` **không** bị sửa.
-
-**Cập nhật:** sau commit Phase A–C trên `master`.
 
 ---
 
@@ -18,7 +17,7 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Phase E — Deploy / observability | 🟡 Một phần (checklist + Prometheus rules mẫu) |
 | Phase 8 — Android polish | ⏳ Chưa |
 
-**Chất lượệ hiện tại:** 110 pytest pass · coverage **~79%** · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
+**Chất lượệ hiện tại:** 110 pytest pass · coverage **~79%** · ruff sạch · mypy (`core`, `domain`, `generation`, `providers`, `pipelines`, `repositories`, `retrieval.scoring`) · gate **≥70%**.
 
 ---
 
@@ -238,6 +237,7 @@ backend/rag/
 
 | Tài liệu | Nội dung |
 |----------|----------|
+| **`docs/v2/AGENT_GUIDE.md`** | **Handoff agent: đã làm / cần làm / lệnh / pitfalls** |
 | `README_UPDATING_CLEAN.md` | Phase 0–7 (trước A–C) |
 | `docs/v2/RAG_ARCHITECTURE.md` | Kiến trúc mục tiêu |
 | `backend/rag/README.md` | Setup + quality |

@@ -1,6 +1,8 @@
 # UnuTrip RAG service
 
-FastAPI retrieval + generation API. Layout:
+FastAPI retrieval + generation API. **Agent onboarding:** [`../../docs/v2/AGENT_GUIDE.md`](../../docs/v2/AGENT_GUIDE.md).
+
+Layout:
 
 | Package | Role |
 |---------|------|

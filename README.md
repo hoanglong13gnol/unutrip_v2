@@ -2,6 +2,8 @@
 
 Bản thư mục này chỉ giữ **mã nguồn và cấu hình vận hành** được tách từ demo v1: Android (`app/`), API Node (`backend/nodejs/`), dịch vụ RAG (`backend/rag/`), migration MySQL (`database/migrations/`), Docker Compose ở root.
 
+**Agent / dev mới:** đọc [`docs/v2/AGENT_GUIDE.md`](docs/v2/AGENT_GUIDE.md) (đã làm / cần làm / lệnh / pitfalls).
+
 ## Đã cố ý loại bỏ
 
 - Báo cáo / luận văn (`docx_doan/`, `CHUONG_*.md`, `*_REPORT_INPUT.md`, …)
