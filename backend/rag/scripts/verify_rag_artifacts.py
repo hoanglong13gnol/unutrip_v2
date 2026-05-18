@@ -9,21 +9,25 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
-from core.artifacts import load_manifest, sha256_file
-
-ROOT = Path(__file__).resolve().parents[1]
+from core.artifacts import load_manifest, manifest_path_issues, resolve_artifact_path, sha256_file
 
 
-def verify_manifest(*, allow_missing: bool = False) -> int:
+def verify_manifest(*, allow_missing: bool = False, require_portable_paths: bool = True) -> int:
     m = load_manifest()
     if not m:
         print("ERROR: no manifest; run jobs/build_rag_artifacts.py or scripts/06_build_bm25_index.py")
         return 0 if allow_missing else 1
 
-    corpus = ROOT / Path(m["corpus_path"])
-    bm25 = ROOT / Path(m["bm25_index_path"])
+    if require_portable_paths and not allow_missing:
+        issues = manifest_path_issues(m)
+        if issues:
+            for msg in issues:
+                print("ERROR:", msg)
+            return 1
+
+    corpus = resolve_artifact_path(str(m["corpus_path"]))
+    bm25 = resolve_artifact_path(str(m["bm25_index_path"]))
 
     if not bm25.exists():
         print("ERROR: BM25 index missing:", bm25)

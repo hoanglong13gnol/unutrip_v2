@@ -11,6 +11,12 @@ Bản thư mục này chỉ giữ **mã nguồn và cấu hình vận hành** đ
 - File thử nghiệm Node (`server.py`, `test_ai.js`) và gói `backend/rag/tools/`
 - `backend/rag/data/image_pipeline/`, cache Gemini, v.v.
 
+## Database (v2)
+
+- **Canonical:** `database/migrations/` — chạy bằng `database/scripts/run_migrations.sh` hoặc `docker compose` (service `db-migrate`).
+- **Deprecated:** `backend/nodejs/database.sql` (chỉ bootstrap Docker khi DB trống).
+- Chi tiết: `database/README.md`.
+
 ## Dữ liệu RAG
 
 - `backend/rag/data/indexes/rag_artifacts_manifest.json` — tracked trong git (checksum corpus + index).

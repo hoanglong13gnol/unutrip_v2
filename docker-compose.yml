@@ -10,8 +10,8 @@
 # RAG docs:    http://localhost:8001/docs
 # MySQL:       localhost:3306 (see MYSQL_* variables)
 #
-# Note: Không tự migrate schema đầy đủ vào MySQL — cần import dump SQL của bạn
-# vào DB ${DB_NAME:-unudata} sau khi container mysql healthy.
+# DB: service `db-migrate` applies database/migrations/ once (see database/README.md).
+# Set DATABASE_BOOTSTRAP_LEGACY=false if you already imported your own dump.
 
 services:
   mysql:
@@ -38,6 +38,28 @@ services:
       timeout: 5s
       retries: 15
       start_period: 30s
+
+  db-migrate:
+    image: mysql:8.0
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-unutrip}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-unutrip_pass}
+      DB_NAME: ${DB_NAME:-unudata}
+      DATABASE_BOOTSTRAP_LEGACY: ${DATABASE_BOOTSTRAP_LEGACY:-true}
+      SKIP_MIGRATION_VALIDATION: ${SKIP_MIGRATION_VALIDATION:-false}
+      MIGRATIONS_DIR: /migrations
+      LEGACY_SQL: /legacy/database.sql
+    volumes:
+      - ./database/migrations:/migrations:ro
+      - ./database/scripts/run_migrations.sh:/run_migrations.sh:ro
+      - ./backend/nodejs/database.sql:/legacy/database.sql:ro
+    command: ["bash", "/run_migrations.sh"]
+    restart: "no"
 
   redis:
     image: redis:7-alpine
@@ -106,10 +128,15 @@ services:
       RAG_INTERNAL_API_KEY: ${RAG_INTERNAL_API_KEY:-}
       RAG_ADMIN_API_KEY: ${RAG_ADMIN_API_KEY:-}
       JWT_SECRET: ${JWT_SECRET:-}
+      # v2 place resolution (Compose stack runs migrations + legacy bootstrap by default)
+      USE_V2_PLACE_TABLES: ${USE_V2_PLACE_TABLES:-true}
+      PLACE_ID_LEGACY_FALLBACK: ${PLACE_ID_LEGACY_FALLBACK:-false}
     volumes:
       - unutrip_backend_uploads:/app/uploads
       - unutrip_backend_public_images:/app/public/images
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
       rag:

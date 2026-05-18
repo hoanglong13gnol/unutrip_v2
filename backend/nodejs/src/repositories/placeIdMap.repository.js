@@ -15,7 +15,7 @@ function isIgnorableSchemaError(error) {
  * 1) `place_id_map` — rag_place_id, exact place_key, or RAG_ALIAS_{id} from migration 007
  * 2) Numeric string → row in `app_places` by primary key (v2 first cut aligns ids with legacy)
  * 3) MANUAL_{n} place_key convention from quick_legacy populate
- * 4) Legacy `destinations.id` when that table exists (XAMPP / old schema without place_id_map)
+ * 4) Legacy `destinations.id` when PLACE_ID_LEGACY_FALLBACK is enabled (off when USE_V2_PLACE_TABLES=true)
  */
 export async function getDestinationIdByRagPlaceId(placeId) {
   const pid = String(placeId ?? "").trim();

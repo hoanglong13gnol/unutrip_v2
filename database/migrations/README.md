@@ -8,6 +8,11 @@
 - **No destructive operations**: do not drop tables, do not drop indexes, and do not alter legacy tables.
 - Test these migrations on `unudata_v2_test` first before production use.
 
+### How to apply
+
+- **Docker Compose:** `db-migrate` service (see root `docker-compose.yml`).
+- **Local shell:** `bash database/scripts/run_migrations.sh` (set `MYSQL_*`, `DB_NAME`; optional `DATABASE_BOOTSTRAP_LEGACY=true`).
+
 ### Migration order
 
 Apply in numeric order:

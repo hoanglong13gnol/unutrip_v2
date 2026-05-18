@@ -10,6 +10,12 @@
 .cxx
 local.properties
 
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
 # Python
 **/.venv/
 **/venv/
@@ -23,6 +29,7 @@ local.properties
 .ruff_cache/
 *.egg-info/
 dist/
+**/dist/
 build/
 
 # Local backup trees (keep out of VCS)
@@ -32,9 +39,15 @@ build/
 
 !.env.example
 
+# Node runtime uploads (Docker uses named volumes)
+backend/nodejs/uploads/
+backend/nodejs/public/images/
+
 # RAG generated intermediates & logs (keep repo lean; regenerate locally)
 backend/rag/_archive/
 backend/rag/reports/
+backend/rag/dist/
+backend/rag/data/raw/
 backend/rag/data/image_pipeline/reports/
 
 # RAG large artifacts — track manifest only; rebuild: jobs/build_rag_artifacts.py

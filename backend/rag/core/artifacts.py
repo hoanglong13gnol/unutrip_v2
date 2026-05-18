@@ -11,10 +11,48 @@ from typing import Any, cast
 from core.config import settings
 
 MANIFEST_NAME = "rag_artifacts_manifest.json"
+_MANIFEST_PATH_KEYS = ("corpus_path", "bm25_index_path")
 
 
 def manifest_path() -> Path:
     return settings.indexes_dir / MANIFEST_NAME
+
+
+def artifact_path_for_manifest(path: Path) -> str:
+    """Store paths relative to RAG root (POSIX) for portable manifests."""
+    resolved = path.expanduser().resolve()
+    root = settings.root_dir.resolve()
+    try:
+        rel = resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"Artifact path {path} is outside RAG root {root}") from exc
+    return rel.as_posix()
+
+
+def resolve_artifact_path(stored: str) -> Path:
+    """Resolve manifest path (repo-relative or legacy absolute)."""
+    raw = stored.strip()
+    p = Path(raw)
+    if p.is_absolute():
+        return p.resolve()
+    return (settings.root_dir / p).resolve()
+
+
+def manifest_path_issues(m: dict[str, Any]) -> list[str]:
+    """Return portability violations (absolute paths, traversal, etc.)."""
+    issues: list[str] = []
+    for key in _MANIFEST_PATH_KEYS:
+        val = m.get(key)
+        if not isinstance(val, str) or not val.strip():
+            issues.append(f"{key} missing or empty")
+            continue
+        if Path(val).is_absolute():
+            issues.append(f"{key} must be repo-relative, not absolute: {val!r}")
+        if ".." in Path(val).parts:
+            issues.append(f"{key} must not contain '..': {val!r}")
+        if val.startswith("\\\\"):
+            issues.append(f"{key} must not be a UNC path: {val!r}")
+    return issues
 
 
 def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -52,9 +90,9 @@ def write_manifest(
         "schema_version": 1,
         "built_at_utc": datetime.now(UTC).isoformat(),
         "api_version": settings.api_version,
-        "corpus_path": str(corpus_path),
+        "corpus_path": artifact_path_for_manifest(corpus_path),
         "corpus_sha256": corpus_sha256,
-        "bm25_index_path": str(bm25_index_path),
+        "bm25_index_path": artifact_path_for_manifest(bm25_index_path),
         "bm25_sha256": bm25_sha256,
         "document_count": document_count,
         "tfidf_enabled": bool(extra and extra.get("tfidf_enabled")),

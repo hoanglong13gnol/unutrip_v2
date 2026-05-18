@@ -18,7 +18,7 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Phase E — Deploy / observability | 🟡 Một phần (`docs/DEPLOY_CHECKLIST.md`) |
 | Phase 8 — Android polish | ⏳ Chưa |
 
-**Chất lượệ hiện tại:** 75 pytest pass · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
+**Chất lượệ hiện tại:** 88+ pytest pass · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
 
 ---
 
@@ -54,6 +54,25 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Pre-commit | `backend/rag/.pre-commit-config.yaml` (ruff, mypy, pytest pre-push) |
 | CI `rag-ci.yml` | Mypy, coverage, upload `.coverage`, `docker build` |
 | Coverage omit | Admin/itinerary nặng, `rag_pipeline` integration, BM25/hybrid — xem `pyproject.toml` |
+
+### P1 — Schema v2 & Compose migrate (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| `database/scripts/run_migrations.sh` | Apply migrations; optional legacy bootstrap |
+| `docker-compose.yml` | Service `db-migrate`; backend `USE_V2_PLACE_TABLES=true` |
+| `database/README.md` | Canonical DB path; deprecate `database.sql` |
+| `backend/nodejs/DATABASE_LEGACY.md` | Hướng dẫn chuyển sang migrations |
+| Tests | `backend/nodejs/tests/env.v2PlaceFlags.test.js` |
+
+### P0 — Hygiene manifest & gitignore (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| `.gitignore` | `data/raw/`, `backend/rag/dist/`, Node `uploads/`, `.vscode/`, `Thumbs.db` |
+| `core/artifacts.py` | `artifact_path_for_manifest`, `resolve_artifact_path`, `manifest_path_issues` |
+| CI verify | `--strict` từ chối path tuyệt đối trong manifest |
+| Manifest tracked | Paths dạng `data/processed/...`, `data/indexes/...` |
 
 ### Phase D — Artifact production & deploy (mới)
 

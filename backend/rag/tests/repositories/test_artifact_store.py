@@ -26,9 +26,9 @@ def test_materialize_from_directory(tmp_path, monkeypatch) -> None:
     corpus.write_text('{"place_id":"p1","title":"Test"}\n', encoding="utf-8")
     index.write_bytes(b"fake-index")
 
-    indexes_dir = release / "indexes"
-    monkeypatch.setattr("core.artifacts.settings.indexes_dir", indexes_dir)
-    monkeypatch.setattr("core.artifacts.manifest_path", lambda: indexes_dir / "rag_artifacts_manifest.json")
+    monkeypatch.setattr(artifact_store.settings, "root_dir", release)
+    monkeypatch.setattr("core.artifacts.settings.root_dir", release)
+    monkeypatch.setattr("core.artifacts.settings.indexes_dir", release / "indexes")
     write_manifest(
         corpus_path=corpus,
         corpus_sha256=sha256_file(corpus),

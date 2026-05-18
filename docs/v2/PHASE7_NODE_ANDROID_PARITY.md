@@ -10,8 +10,8 @@
 
 | Env | Default | Effect |
 |-----|---------|--------|
-| `USE_V2_PLACE_TABLES` | `false` | When `true`, disables legacy `destinations` fallback in place-id resolution |
-| `PLACE_ID_LEGACY_FALLBACK` | `true` | Lookup `destinations` / `rag_place_id` when v2 map misses (ignored if `USE_V2_PLACE_TABLES=true`) |
+| `USE_V2_PLACE_TABLES` | `false` (local); `true` in Docker Compose | When `true`, disables legacy `destinations` fallback in place-id resolution |
+| `PLACE_ID_LEGACY_FALLBACK` | `true` (local); `false` in Docker Compose | Lookup `destinations` / `rag_place_id` when v2 map misses (ignored if `USE_V2_PLACE_TABLES=true`) |
 
 ## Contract E2E
 

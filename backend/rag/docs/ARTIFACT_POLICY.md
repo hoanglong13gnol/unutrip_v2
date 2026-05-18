@@ -28,6 +28,8 @@ Steps:
 
 Do **not** commit `.pkl` or full JSONL. Update the manifest only when you intentionally refresh production checksums after a local build.
 
+Manifest `corpus_path` / `bm25_index_path` must be **repo-relative** POSIX paths (e.g. `data/processed/places_rag_documents.jsonl`). CI rejects absolute Windows/Linux paths (`verify_rag_artifacts.py --strict`).
+
 ## CI build (reproducible, no DB)
 
 ```bash
