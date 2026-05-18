@@ -1,0 +1,44 @@
+[project]
+name = "unutrip-rag"
+version = "0.3.0"
+description = "UnuTrip FastAPI RAG service (retrieval + Gemini generation)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "app*",
+    "core*",
+    "domain*",
+    "generation*",
+    "llm*",
+    "pipelines*",
+    "retrieval*",
+    "services*",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/06_build_bm25_index.py" = ["E402"]
+"generation/prompt_builder.py" = ["E501"]
+"pipelines/rag_pipeline.py" = ["E501"]
+"retrieval/bm25_retriever.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "core", "domain", "generation", "llm", "pipelines", "retrieval", "services"]
