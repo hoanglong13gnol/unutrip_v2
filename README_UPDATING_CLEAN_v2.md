@@ -55,6 +55,15 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | CI `rag-ci.yml` | Mypy, coverage, upload `.coverage`, `docker build` |
 | Coverage omit | Admin/itinerary nặng, `rag_pipeline` integration, BM25/hybrid — xem `pyproject.toml` |
 
+### P3 — Coverage & mypy mở rộng (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| Tests | `test_rag_pipeline_unit.py`, `test_request_logger.py` |
+| Coverage omit | Bỏ `rag_pipeline`, `request_logger`, `intent_parser` khỏi omit |
+| Mypy | Thêm `repositories`, `retrieval.scoring` |
+| Staging smoke | `scripts/smoke_staging_e2e.sh` |
+
 ### P2 — CI & ops (mới)
 
 | Hạng mục | Chi tiết |
@@ -128,9 +137,10 @@ tests/test_pipeline_city_match.py
 
 ### Chất lượng code (trung bình)
 
-- [ ] Mở rộng coverage: bỏ dần `omit` — test `rag_pipeline` E2E, `place_store`, `data_quality_service`
-- [ ] `travel_rules.py` (~50% coverage) — golden tests theo interest/province
-- [ ] Mypy mở rộng: `retrieval/`, `services/`, `app/` (hiện `follow_imports=skip`)
+- [x] Test `rag_pipeline` unit (mocked) + `request_logger`
+- [ ] Tiếp bỏ omit: `place_store`, `hybrid_retriever`, admin services
+- [x] `travel_rules` golden tests (`test_travel_rules_golden.py`)
+- [x] Mypy: `repositories`, `retrieval.scoring` (chưa full `retrieval/` / `app/`)
 - [x] `repositories/artifact_store.py` — artifact loader (align `RAG_ARCHITECTURE.md`)
 
 ### Retrieval & sản phẩm (trung bình)

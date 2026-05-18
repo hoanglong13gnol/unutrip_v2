@@ -13,7 +13,7 @@ lint:
 	ruff check app core domain generation llm pipelines providers retrieval services tests scripts
 
 typecheck:
-	python -m mypy --explicit-package-bases -p core -p domain -p generation -p providers -p pipelines
+	python -m mypy --explicit-package-bases -p core -p domain -p generation -p providers -p pipelines -p repositories -p retrieval.scoring
 
 test-fast:
 	python -m pytest tests/ -q --no-cov

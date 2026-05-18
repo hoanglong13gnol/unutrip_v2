@@ -72,6 +72,13 @@ Example rules: `deploy/prometheus/unutrip-rag-alerts.yml` (see `deploy/prometheu
 3. `curl -s http://localhost:3000/api/health/ready | jq`
 4. Smoke: `POST /v1/rag/chat/simple` via Node proxy with `X-RAG-Internal-Key`.
 
+Automated (from repo root, stack running):
+
+```bash
+export RAG_INTERNAL_API_KEY=your-key
+bash scripts/smoke_staging_e2e.sh
+```
+
 ## CI gate (repo)
 
 - Workflow: `.github/workflows/rag-ci.yml` (fixture build, 70% coverage, eval golden).

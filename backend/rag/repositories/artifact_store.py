@@ -24,11 +24,12 @@ _ARTIFACT_REL_PATHS = (
 def index_is_present() -> bool:
     manifest = settings.indexes_dir / "rag_artifacts_manifest.json"
     index = settings.indexes_dir / "bm25_index.pkl"
-    return manifest.is_file() and index.is_file()
+    return bool(manifest.is_file() and index.is_file())
 
 
 def _data_root() -> Path:
-    return settings.root_dir / "data"
+    root: Path = settings.root_dir
+    return root / "data"
 
 
 def _copy_tree_file(src_root: Path, rel: str, *, required: bool) -> None:

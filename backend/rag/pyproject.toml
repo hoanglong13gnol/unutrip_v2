@@ -84,12 +84,9 @@ omit = [
     "retrieval/place_store.py",
     "retrieval/bm25_retriever.py",
     "retrieval/hybrid_retriever.py",
-    "retrieval/intent_parser.py",
     "retrieval/rerank.py",
     "retrieval/logger.py",
     "retrieval/fusion.py",
-    "pipelines/rag_pipeline.py",
-    "pipelines/request_logger.py",
 ]
 
 [tool.coverage.report]
@@ -106,7 +103,7 @@ warn_return_any = true
 warn_unused_ignores = true
 no_implicit_optional = true
 check_untyped_defs = true
-packages = ["core", "domain", "generation", "providers", "pipelines"]
+packages = ["core", "domain", "generation", "providers", "pipelines", "repositories", "retrieval.scoring"]
 follow_imports = "skip"
 exclude = ["tests/", "scripts/", "jobs/"]
 

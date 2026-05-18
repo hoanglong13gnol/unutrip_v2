@@ -44,7 +44,7 @@ def name_dedup_key(title: str | None) -> str:
     ]
 
     if not tokens:
-        return normalize_text(str(title or ""))
+        return str(normalize_text(str(title or "")))
 
     return " ".join(tokens)
 

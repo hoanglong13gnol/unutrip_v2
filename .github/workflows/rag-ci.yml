@@ -31,7 +31,10 @@ jobs:
       - name: Ruff lint
         run: ruff check app core domain generation llm pipelines providers repositories retrieval services tests scripts jobs
       - name: Mypy (core packages)
-        run: python -m mypy --explicit-package-bases -p core -p domain -p generation -p providers -p pipelines
+        run: >-
+          python -m mypy --explicit-package-bases
+          -p core -p domain -p generation -p providers -p pipelines
+          -p repositories -p retrieval.scoring
       - name: Import app
         run: python -c "from app.main import app; print(app.title)"
       - name: Build CI fixture artifacts
