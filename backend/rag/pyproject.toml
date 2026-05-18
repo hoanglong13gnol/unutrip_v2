@@ -97,7 +97,16 @@ warn_return_any = true
 warn_unused_ignores = true
 no_implicit_optional = true
 check_untyped_defs = true
-packages = ["core", "domain", "generation", "providers", "pipelines", "repositories", "retrieval.scoring"]
+packages = [
+    "core",
+    "domain",
+    "generation",
+    "providers",
+    "pipelines",
+    "repositories",
+    "retrieval",
+    "app",
+]
 follow_imports = "skip"
 exclude = ["tests/", "scripts/", "jobs/"]
 
@@ -107,8 +116,15 @@ module = [
     "rank_bm25.*",
     "google.*",
     "genai.*",
+    "sklearn.*",
+    "sentence_transformers.*",
+    "opentelemetry.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["app.routers.*"]
+disable_error_code = ["no-any-return"]
 
 [tool.ruff]
 line-length = 120

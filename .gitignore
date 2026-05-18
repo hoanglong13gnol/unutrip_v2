@@ -47,6 +47,7 @@ backend/nodejs/public/images/
 backend/rag/_archive/
 backend/rag/reports/
 backend/rag/dist/
+deploy/staging-rag-data/
 backend/rag/data/raw/
 backend/rag/data/image_pipeline/reports/
 

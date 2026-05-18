@@ -25,7 +25,7 @@ if [[ -n "$RAG_KEY" ]]; then
   code=$(curl -s -o /dev/null -w "%{http_code}" \
     -H "X-RAG-Internal-Key: $RAG_KEY" \
     -H "Content-Type: application/json" \
-    -d '{"query":"điểm tham quan Hà Giang","top_k":3}' \
+    -d '{"message":"điểm tham quan Hà Giang","top_k":3}' \
     "$RAG_BASE/v1/rag/chat/simple")
   [[ "$code" == "200" ]] || fail "RAG chat/simple HTTP $code"
   ok "RAG /v1/rag/chat/simple"

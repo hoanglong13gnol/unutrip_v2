@@ -9,12 +9,23 @@
    python jobs/build_rag_artifacts.py --from-db --export-places
    python scripts/verify_rag_artifacts.py --strict
    ```
-2. Package release (example):
+2. Package release:
    ```bash
-   cd data
-   zip -r ../unutrip-rag-artifacts.zip processed/places_rag_documents.jsonl processed/places_app.json indexes/
+   cd backend/rag
+   python jobs/package_rag_artifacts.py -o dist/unutrip-rag-artifacts-prod.zip
+   # emits .zip.sha256 and .zip.RELEASE.json (checksums for deploy audit)
    ```
-3. Upload `unutrip-rag-artifacts.zip` to object storage or GitHub Release asset.
+   Or one-shot from repo root (build + package + local stage):
+   ```powershell
+   .\scripts\publish_rag_bundle.ps1
+   # staged dir → RAG_ARTIFACT_SOURCE_DIR=deploy/staging-rag-data
+   ```
+3. Upload `unutrip-rag-artifacts-prod.zip` to S3 or GitHub Release asset.
+   ```powershell
+   $env:RAG_ARTIFACT_S3_URI = "s3://YOUR-BUCKET/releases/unutrip-rag-artifacts-prod.zip"
+   .\scripts\publish_rag_bundle.ps1 -SkipBuild
+   ```
+   Then set `RAG_ARTIFACT_BUNDLE_URL` to the **HTTPS** URL (must end with `.zip`).
 4. Commit **only** `indexes/rag_artifacts_manifest.json` when checksums change (optional, for audit).
 
 ## Runtime (container / VM)
@@ -78,6 +89,17 @@ Automated (from repo root, stack running):
 export RAG_INTERNAL_API_KEY=your-key
 bash scripts/smoke_staging_e2e.sh
 ```
+
+Windows (local MySQL, no Docker): set `DB_NAME` in `.env` (e.g. `unudata_v2_test` after import), then:
+
+```powershell
+.\scripts\staging_local.ps1
+# two terminals: uvicorn (8001) + npm start (3000)
+$env:RAG_INTERNAL_API_KEY = "your-key"
+.\scripts\smoke_staging_e2e.ps1
+```
+
+Discover DB name: `python scripts/probe_mysql_rag.py` (lists DBs with `rag_knowledge_base`).
 
 ## CI gate (repo)
 

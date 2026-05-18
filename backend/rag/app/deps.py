@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import Depends, HTTPException, Request
 
@@ -14,14 +14,14 @@ def get_pipeline(request: Request) -> RagPipeline:
     pipeline = getattr(request.app.state, "pipeline", None)
     if pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline is not initialized")
-    return pipeline
+    return cast(RagPipeline, pipeline)
 
 
 def get_rag_service(request: Request) -> RagService:
     svc = getattr(request.app.state, "rag_service", None)
     if svc is None:
         raise HTTPException(status_code=503, detail="RAG service is not initialized")
-    return svc
+    return cast(RagService, svc)
 
 
 PipelineDep = Annotated[RagPipeline, Depends(get_pipeline)]

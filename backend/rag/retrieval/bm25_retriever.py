@@ -15,10 +15,10 @@ class BM25Retriever:
     def __init__(self, index_file: Path = BM25_INDEX_FILE):
         self.index_file = index_file
         self.docs: list[dict[str, Any]] = []
-        self.bm25 = None
+        self.bm25: Any = None
         self.tokenized_corpus: list[list[str]] = []
-        self.tfidf_vectorizer = None
-        self.tfidf_X_norm = None
+        self.tfidf_vectorizer: Any = None
+        self.tfidf_X_norm: Any = None
 
     def load(self) -> None:
         if not self.index_file.exists():
@@ -60,9 +60,11 @@ class BM25Retriever:
     ) -> list[dict[str, Any]]:
         if self.bm25 is None:
             self.load()
+        bm25 = self.bm25
+        assert bm25 is not None
 
         query_tokens = tokenize_vi(query)
-        scores = self.bm25.get_scores(query_tokens)
+        scores = bm25.get_scores(query_tokens)
 
         ranked_indices = np.argsort(scores)[::-1]
 
@@ -111,7 +113,10 @@ class BM25Retriever:
         if not self.has_tfidf():
             return []
 
-        q = self.tfidf_vectorizer.transform([query])
+        vectorizer = self.tfidf_vectorizer
+        assert vectorizer is not None
+
+        q = vectorizer.transform([query])
         # sklearn normalizes sparse in-place copy
         from sklearn.preprocessing import normalize
 

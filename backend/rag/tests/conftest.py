@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -17,6 +18,28 @@ from core.config import settings
 from services.rag_service import RagService
 
 RAG_ROOT = Path(__file__).resolve().parents[1]
+
+# CI fixture corpus is small; production local builds use thousands of docs.
+_FIXTURE_MAX_DOCUMENT_COUNT = 50
+
+
+def _fixture_artifacts_stale() -> bool:
+    index_path = settings.indexes_dir / "bm25_index.pkl"
+    manifest_path = settings.indexes_dir / "rag_artifacts_manifest.json"
+    if not index_path.is_file() or not manifest_path.is_file():
+        return True
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return True
+    return int(manifest.get("document_count", 0)) > _FIXTURE_MAX_DOCUMENT_COUNT
+
+
+def _build_fixture_artifacts() -> None:
+    subprocess.check_call(
+        [sys.executable, str(RAG_ROOT / "jobs" / "build_rag_artifacts.py"), "--from-fixture"],
+        cwd=str(RAG_ROOT),
+    )
 
 
 def _sample_pipeline_result() -> dict[str, Any]:
@@ -53,15 +76,10 @@ def _sample_pipeline_result() -> dict[str, Any]:
 
 @pytest.fixture(scope="session")
 def fixture_bm25_index() -> Path:
-    """BM25 index from tracked fixture corpus (build once per test session)."""
+    """BM25 index from tracked fixture corpus (rebuild if a production index is on disk)."""
+    if _fixture_artifacts_stale():
+        _build_fixture_artifacts()
     index_path = settings.indexes_dir / "bm25_index.pkl"
-    corpus_path = settings.rag_documents_file
-
-    if not (index_path.is_file() and corpus_path.is_file()):
-        subprocess.check_call(
-            [sys.executable, str(RAG_ROOT / "jobs" / "build_rag_artifacts.py"), "--from-fixture"],
-            cwd=str(RAG_ROOT),
-        )
     assert index_path.is_file()
     return index_path
 
@@ -102,6 +120,11 @@ def mock_pipeline() -> MagicMock:
 
 @pytest.fixture
 def api_client(mock_pipeline: MagicMock, monkeypatch: pytest.MonkeyPatch) -> TestClient:
+    # Root .env often sets RAG_INTERNAL_API_KEY for staging; HTTP tests use mocked pipeline.
+    monkeypatch.setenv("RAG_INTERNAL_API_KEY", "")
+    monkeypatch.setenv("RAG_ADMIN_API_KEY", "")
+    monkeypatch.setattr("app.middleware.get_internal_api_key", lambda: None)
+    monkeypatch.setattr("app.middleware.get_admin_api_key", lambda: None)
     monkeypatch.setattr("app.main.RagPipeline", lambda: mock_pipeline)
     monkeypatch.setattr("app.main.init_redis", lambda _url: None)
     monkeypatch.setattr("app.main.close_redis", lambda: None)

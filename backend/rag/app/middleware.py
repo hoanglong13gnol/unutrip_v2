@@ -58,8 +58,8 @@ def _path_exempt_from_api_key(path: str) -> bool:
 
 def _required_api_key(path: str) -> str | None:
     """Return the secret that must match, or None if route is open."""
-    internal = get_internal_api_key()
-    admin = get_admin_api_key()
+    internal: str | None = get_internal_api_key()
+    admin: str | None = get_admin_api_key()
 
     if path.startswith("/admin"):
         if admin:

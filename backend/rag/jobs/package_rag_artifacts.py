@@ -12,12 +12,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import subprocess
 import sys
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
-
-from core.config import settings
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "dist" / "unutrip-rag-artifacts.zip"
@@ -56,7 +57,32 @@ def main() -> None:
                 raise FileNotFoundError(src)
             zf.write(src, arcname=f"data/{rel}")
 
+    digest = hashlib.sha256(out.read_bytes()).hexdigest()
+    sha_path = out.with_suffix(out.suffix + ".sha256")
+    sha_path.write_text(f"{digest}  {out.name}\n", encoding="utf-8")
+
+    manifest_path = data_root / "indexes" / "rag_artifacts_manifest.json"
+    manifest = {}
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    release_meta = {
+        "packaged_at_utc": datetime.now(UTC).isoformat(),
+        "zip_name": out.name,
+        "zip_bytes": out.stat().st_size,
+        "zip_sha256": digest,
+        "document_count": manifest.get("document_count"),
+        "corpus_sha256": manifest.get("corpus_sha256"),
+        "bm25_sha256": manifest.get("bm25_sha256"),
+        "bundle_layout": "data/processed/* + data/indexes/* inside zip",
+        "deploy_env": "RAG_ARTIFACT_BUNDLE_URL=https://<host>/path/to/" + out.name,
+    }
+    meta_path = out.with_name(out.name + ".RELEASE.json")
+    meta_path.write_text(json.dumps(release_meta, indent=2) + "\n", encoding="utf-8")
+
     print(f"Wrote {out} ({out.stat().st_size} bytes)")
+    print(f"SHA256 {digest}")
+    print(f"Wrote {sha_path.name}, {meta_path.name}")
 
 
 if __name__ == "__main__":
