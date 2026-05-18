@@ -1,0 +1,24 @@
+{
+  "answer": "Gợi ý đi biển Khánh Hòa cuối tuần.",
+  "places": [
+    {
+      "place_id": "FIX_KH_BEACH_01",
+      "name": "Bãi biển Trần Phú",
+      "province": "Khánh Hòa",
+      "city": "Nha Trang",
+      "category_main": "beach",
+      "budget_level": "low",
+      "walking_level": "easy",
+      "kid_friendly": true,
+      "elderly_friendly": true,
+      "quality_score": 4.5,
+      "score": 12.3
+    }
+  ],
+  "warnings": ["kiểm tra thời tiết trước khi đi"],
+  "latency_ms": { "total": 120.5, "retrieval": 40.0, "generation": 70.0 },
+  "model_used": "gemini-2.5-flash",
+  "fallback_used": false,
+  "rag_mode": "balanced",
+  "runtime_mode": "demo"
+}

@@ -7,7 +7,7 @@
  * deeper than the old `routes/helpers.js`.
  */
 
-import * as placeIdMapRepository from "../../repositories/placeIdMap.repository.js";
+import * as placeIdMapService from "../../services/placeIdMap.service.js";
 
 export function flattenSelectedOptionDays(days) {
   const selectedDestinations = [];
@@ -30,6 +30,7 @@ export function flattenSelectedOptionDays(days) {
 export async function resolveDestinationIdsFromSelection(selectedDestinations) {
   const resolvedIds = [];
   const unresolved = [];
+  const pending = [];
 
   for (const item of selectedDestinations || []) {
     const directId = item?.destinationId ?? item?.destination_id;
@@ -44,12 +45,7 @@ export async function resolveDestinationIdsFromSelection(selectedDestinations) {
       continue;
     }
 
-    const rawPlaceId =
-      item?.rawPlaceId ??
-      item?.raw_place_id ??
-      item?.placeId ??
-      item?.place_id;
-
+    const rawPlaceId = placeIdMapService.extractRawPlaceId(item);
     if (!rawPlaceId) {
       unresolved.push({
         item,
@@ -58,17 +54,21 @@ export async function resolveDestinationIdsFromSelection(selectedDestinations) {
       continue;
     }
 
-    const destinationId = await placeIdMapRepository.getDestinationIdByRagPlaceId(rawPlaceId);
+    pending.push({ item, rawPlaceId });
+  }
 
-    if (!destinationId) {
+  const { resolved } = await placeIdMapService.resolveRawPlaceIds(pending.map((p) => p.rawPlaceId));
+
+  for (const { rawPlaceId } of pending) {
+    const appPlaceId = resolved.get(rawPlaceId);
+    if (!appPlaceId) {
       unresolved.push({
         rawPlaceId,
-        reason: "not found in rag_places or destination_id is null"
+        reason: "not found in place_id_map or app_places"
       });
       continue;
     }
-
-    resolvedIds.push(Number(destinationId));
+    resolvedIds.push(Number(appPlaceId));
   }
 
   return {

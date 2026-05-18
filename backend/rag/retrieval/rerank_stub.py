@@ -1,17 +1,5 @@
-"""Optional cross-encoder rerank (stub for future sentence-transformers / API rerank)."""
+"""Backward-compatible re-exports; implementation lives in `retrieval.rerank`."""
 
-from __future__ import annotations
+from retrieval.rerank import cross_encoder_rerank, maybe_cross_encoder_rerank, rerank_candidates
 
-from typing import Any
-
-
-def maybe_cross_encoder_rerank(
-    query: str,
-    items: list[dict[str, Any]],
-    *,
-    top_k: int,
-    enabled: bool = False,
-) -> list[dict[str, Any]]:
-    if not enabled or not items:
-        return items[:top_k]
-    return items[:top_k]
+__all__ = ["cross_encoder_rerank", "maybe_cross_encoder_rerank", "rerank_candidates"]

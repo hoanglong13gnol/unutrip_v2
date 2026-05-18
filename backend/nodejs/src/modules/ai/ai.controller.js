@@ -324,7 +324,7 @@ export async function createFromOption(req, res) {
     if (!result.ok && result.reason === "no_mapped_destinations") {
       return res.status(400).json({
         success: false,
-        message: "Không map được địa điểm nào sang destinations.id",
+        message: "Không map được địa điểm nào sang app_places.id",
         data: {
           optionId: result.optionId ?? null,
           unresolved: result.unresolved
@@ -376,7 +376,7 @@ export async function createFromSelection(req, res) {
     if (!result.ok && result.reason === "no_mapped_destinations") {
       return res.status(400).json({
         success: false,
-        message: "Không map được địa điểm nào sang destinations.id",
+        message: "Không map được địa điểm nào sang app_places.id",
         data: {
           receivedSelectedDestinations: result.receivedSelectedDestinations ?? null,
           receivedSelectedDestinationIds: result.receivedSelectedDestinationIds ?? null,

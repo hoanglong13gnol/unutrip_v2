@@ -1,12 +1,13 @@
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from typing import Any
 
 from google import genai
 
 from core.config import settings
+from core.metrics import record_gemini_outcome
+from llm.gemini_executor import get_gemini_executor
 
 
 class GeminiGenerator:
@@ -40,19 +41,17 @@ class GeminiGenerator:
                 "retry_after_seconds": max(0, int(GeminiGenerator._circuit_open_until - time.time()) + 1),
             }
 
-        executor = ThreadPoolExecutor(max_workers=1)
-        future = executor.submit(self._generate_sync, prompt)
+        future = get_gemini_executor().submit(self._generate_sync, prompt)
 
         try:
             text = future.result(timeout=self.timeout_seconds)
             latency_ms = (time.perf_counter() - started) * 1000
 
-            executor.shutdown(wait=False, cancel_futures=True)
-
             if not text:
                 text = "Dữ liệu hiện chưa đủ để tạo câu trả lời chi tiết."
 
             GeminiGenerator._quota_streak = 0
+            record_gemini_outcome("ok")
 
             return {
                 "ok": True,
@@ -69,7 +68,7 @@ class GeminiGenerator:
             latency_ms = (time.perf_counter() - started) * 1000
 
             future.cancel()
-            executor.shutdown(wait=False, cancel_futures=True)
+            record_gemini_outcome("timeout")
 
             GeminiGenerator._quota_streak = 0
 
@@ -87,10 +86,9 @@ class GeminiGenerator:
         except Exception as exc:
             latency_ms = (time.perf_counter() - started) * 1000
 
-            executor.shutdown(wait=False, cancel_futures=True)
-
             error_text = str(exc)
             error_type = self._classify_error(error_text)
+            record_gemini_outcome(error_type)
             retry_after_seconds = self._extract_retry_after_seconds(error_text)
 
             if error_type == "quota_exceeded":

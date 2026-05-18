@@ -93,10 +93,21 @@ class Settings(BaseModel):
 
     # Retrieval / ops
     enable_rrf_fusion: bool = env_bool("RAG_ENABLE_RRF", True)
+    enable_rerank: bool = env_bool("RAG_ENABLE_RERANK", True)
+    enable_cross_encoder: bool = env_bool("RAG_ENABLE_CROSS_ENCODER", False)
+    cross_encoder_model: str = env_str(
+        "RAG_CROSS_ENCODER_MODEL",
+        "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    )
+    rerank_candidate_pool: int = env_int("RAG_RERANK_CANDIDATE_POOL", 48)
     rate_limit_per_minute: int = env_int("RAG_RATE_LIMIT_PER_MINUTE", 120)
     gemini_circuit_failure_threshold: int = env_int("RAG_GEMINI_CIRCUIT_FAILURES", 4)
     gemini_circuit_cooldown_seconds: int = env_int("RAG_GEMINI_CIRCUIT_COOLDOWN_SECONDS", 90)
     log_json: bool = env_bool("RAG_LOG_JSON", False)
+    rag_env: str = env_str("RAG_ENV", "development")
+    ready_requires_index: bool = env_bool("RAG_READY_REQUIRES_INDEX", True)
+    enable_metrics: bool = env_bool("RAG_ENABLE_METRICS", False)
+    gemini_executor_workers: int = env_int("RAG_GEMINI_EXECUTOR_WORKERS", 4)
 
     # Redis (optional): rate limit + Gemini response cache across replicas
     redis_url: str | None = optional_stripped_url("REDIS_URL")

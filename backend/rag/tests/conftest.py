@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -10,7 +13,10 @@ from fastapi.testclient import TestClient
 
 from app.deps import get_pipeline, get_rag_service
 from app.main import app
+from core.config import settings
 from services.rag_service import RagService
+
+RAG_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _sample_pipeline_result() -> dict[str, Any]:
@@ -43,6 +49,21 @@ def _sample_pipeline_result() -> dict[str, Any]:
         "runtime_mode": "mock",
         "rag_mode": "balanced",
     }
+
+
+@pytest.fixture(scope="session")
+def fixture_bm25_index() -> Path:
+    """BM25 index from tracked fixture corpus (build once per test session)."""
+    index_path = settings.indexes_dir / "bm25_index.pkl"
+    corpus_path = settings.rag_documents_file
+
+    if not (index_path.is_file() and corpus_path.is_file()):
+        subprocess.check_call(
+            [sys.executable, str(RAG_ROOT / "jobs" / "build_rag_artifacts.py"), "--from-fixture"],
+            cwd=str(RAG_ROOT),
+        )
+    assert index_path.is_file()
+    return index_path
 
 
 @pytest.fixture

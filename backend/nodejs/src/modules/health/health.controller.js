@@ -28,13 +28,23 @@ export async function getHealthReady(req, res) {
   }
 
   try {
-    const ragHealthUrl = ragUrl("/health");
-    const ragRes = await fetch(ragHealthUrl, {
+    const ragReadyUrl = ragUrl("/health/ready");
+    const ragRes = await fetch(ragReadyUrl, {
       method: "GET",
       headers: ragAuthHeaders(),
       signal: AbortSignal.timeout(5000),
     });
     checks.rag = ragRes.ok;
+    if (ragRes.ok) {
+      try {
+        const body = await ragRes.json();
+        checks.rag_status = body.status;
+        checks.rag_pipeline_loaded = body.pipeline_loaded;
+        checks.rag_bm25_index_exists = body.bm25_index_exists;
+      } catch {
+        /* ignore parse errors; HTTP ok is enough */
+      }
+    }
     if (!ragRes.ok) {
       return res.status(503).json({ ok: false, checks });
     }

@@ -50,28 +50,73 @@ Demo gốc `e:\UNUtrip` **không** bị sửa; mọi thay đổi trên tree v2 n
 | CI gộp | `backend-ci.yml` bỏ job `rag-tests` trùng; RAG chỉ qua `rag-ci.yml` |
 | Eval | `--min-province-accuracy`, `--min-hit-at5` (khi có label) |
 
+### Phase 4 — Dữ liệu reproducible
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| Fixture CI | `tests/fixtures/rag_corpus_sample.jsonl`, `places_app_sample.json` |
+| Build | `jobs/build_rag_artifacts.py --from-fixture` / `--from-db` + `--export-places` |
+| Export DB | `export_rag_knowledge_base_to_corpus.py`, `export_app_places_to_json.py` |
+| Verify strict | CI: `verify_rag_artifacts.py --strict` (không `--allow-missing`) |
+| Golden CI | `eval/golden_queries_ci.json` + `hit@5` / province gates |
+| Policy | `backend/rag/docs/ARTIFACT_POLICY.md` |
+| Fix | `intent_parser`: alias `thua thien hue` → `thua_thien_hue` |
+
+### Phase 5 — Retrieval nâng cao
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| Rerank | `retrieval/rerank.py` — dense TF-IDF (default) + optional cross-encoder |
+| Hybrid | `HybridRetriever` gọi rerank sau travel rules; debug `rerank_mode` |
+| RRF | BM25 + char TF-IDF fusion (đã có, bật `RAG_ENABLE_RRF`) |
+| Golden | `golden_queries_ci.json` 4 case có label; `--require-labels` trong eval |
+| CI gate | `mean_hit@5 >= 0.75`, province `1.0` trên fixture |
+| Tests | `test_rerank.py`, `test_retrieval_fixture.py` |
+| Docs | `docs/RETRIEVAL.md`, `requirements-rerank.txt` (optional) |
+
+### Phase 6 — Production hardening
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| Secrets | `core/production.py` — bắt buộc prod: API keys, `RAG_DEBUG=false` |
+| Node | `assertSafeProductionConfig()` — JWT mạnh, 2 RAG keys khác nhau |
+| Ready | `core/readiness.py` — index + pipeline + prod config; Node gọi RAG `/health/ready` |
+| Gemini | `llm/gemini_executor.py` — shared pool, không tạo executor/request |
+| Metrics | `prometheus-client`, `GET /metrics` khi `RAG_ENABLE_METRICS=true` |
+| Logs | JSON access logs + `request_id` / duration trên `rag.access` |
+| Docs | `docs/PRODUCTION.md` |
+
+### Phase 7 — Node / Android parity
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| v2 tables | Node đọc `app_places` / `place_images`; reviews → `app_places` |
+| Place ID | `placeIdMap.service.js` batch resolve + diagnostics |
+| Flags | `USE_V2_PLACE_TABLES`, `PLACE_ID_LEGACY_FALLBACK` |
+| Contract E2E | `docs/v2/fixtures/rag_chat_simple_sample.json` (Node Zod + RAG Pydantic) |
+| Android | `androidDestinationContract.test.js` — khóa field DTO ổn định |
+| Docs | `docs/v2/PHASE7_NODE_ANDROID_PARITY.md` |
+
 ---
 
 ## Phải làm (backlog ưu tiên)
 
 ### Dữ liệu & artifact (cao)
 
-- [ ] Tạo / commit pipeline corpus: `places_rag_documents.jsonl` (export DB hoặc Excel) rồi `jobs/build_rag_artifacts.py`
-- [ ] Chính sách artifact rõ ràng: Git LFS, S3/release asset, hoặc **chỉ CI build** (không commit `.pkl` 250MB+)
-- [ ] `places_app.json` / `places_app_reviewed.json` cho `PlaceStore` + itinerary preview khi không có DB
+- [ ] Production corpus full: export DB → `places_rag_documents.jsonl` + cập nhật manifest checksum (local, không commit `.pkl`)
+- [ ] Release asset / S3 / Git LFS nếu cần deploy artifact ngoài CI fixture
+- [ ] `places_app_reviewed.json` (human review) — tùy chọn, ngoài export `app_places`
 
 ### Production (cao)
 
-- [ ] Bắt buộc prod: `RAG_INTERNAL_API_KEY`, `RAG_ADMIN_API_KEY`, `RAG_DEBUG=false`, `JWT_SECRET` mạnh (Node)
-- [ ] `/health/ready` phản ánh đúng policy (có index vs chỉ pipeline)
-- [ ] Sửa `GeminiGenerator`: không tạo `ThreadPoolExecutor` mỗi request (pool dùng chung / async)
+- [ ] Deploy checklist: set `RAG_ENV=production`, `NODE_ENV=production`, metrics scrape, artifact mount
+- [ ] Alerting trên `/metrics` và 503 `/health/ready`
 
 ### Retrieval & chất lượng (trung bình)
 
-- [ ] Golden set có `relevant_place_ids` + ngưỡng `hit@5` trong CI
-- [ ] Fixture index nhỏ trong `tests/fixtures/` cho test retrieval không phụ thuộc `.pkl` production
-- [ ] Rerank thật (cross-encoder) thay `rerank_stub.py`
-- [ ] Vector / hybrid dense+sparse (nếu cần)
+- [ ] Golden production: gán `relevant_place_ids` trên full index (`golden_queries.json`)
+- [ ] Bật cross-encoder prod (`RAG_ENABLE_CROSS_ENCODER`) sau khi cài `requirements-rerank.txt`
+- [ ] Dense vector DB / embedding index riêng (ngoài char TF-IDF) nếu cần scale
 
 ### Code & kiến trúc (trung bình)
 
@@ -82,26 +127,15 @@ Demo gốc `e:\UNUtrip` **không** bị sửa; mọi thay đổi trên tree v2 n
 
 ### Monorepo & Android (thấp–trung bình)
 
-- [ ] Phase Node trong `docs/v2/REFACTOR_PHASE_PLAN.md` (repository layer, `place_id_map`, …)
-- [ ] Đảm bảo `node_modules/` không lọt VCS; `npm ci` trong CI Node (đã có)
 - [ ] Push remote + branch protection + bắt buộc `rag-ci` / `backend-ci`
+- [ ] Android polish (REFACTOR phase 8) sau khi staging E2E pass
 
 ---
 
 ## Làm tiếp theo (đề xuất thứ tự)
 
 ```text
-Phase 4 — Dữ liệu reproducible
-  → export corpus + build index + verify strict trong CI (fail nếu thiếu trên branch release)
-
-Phase 5 — Retrieval nâng cao
-  → golden labels, hit@5 gate, optional rerank / vector
-
-Phase 6 — Production hardening
-  → secrets, Gemini pool, metrics (Prometheus), structured logs
-
-Phase 7 — Node / Android parity
-  → theo REFACTOR_PHASE_PLAN.md (DB v2, contract E2E)
+Phase 8 — Android polish (sau khi API ổn định trên staging)
 ```
 
 ---
@@ -117,11 +151,13 @@ pip install --no-deps -e .
 # Chạy API
 uvicorn app.main:app --reload --port 8001
 
-# Chất lượng
+# Chất lượng (+ Phase 4 fixture pipeline)
 ruff check app core domain generation llm pipelines retrieval services tests scripts
 python -m pytest tests/ -q
-python scripts/verify_rag_artifacts.py --allow-missing
-python scripts/eval_rag_retrieval.py --ci --min-province-accuracy 0.5
+python jobs/build_rag_artifacts.py --from-fixture
+python scripts/verify_rag_artifacts.py
+python scripts/eval_rag_retrieval.py --golden eval/golden_queries_ci.json --ci \
+  --require-labels --min-province-accuracy 1.0 --min-hit-at5 0.75
 ```
 
 ---

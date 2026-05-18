@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -20,7 +21,12 @@ def test_health_ready_without_pipeline_returns_503(api_client: TestClient) -> No
     assert r.json()["pipeline_loaded"] is False
 
 
-def test_health_ready_with_mock_pipeline(api_client: TestClient) -> None:
+def test_health_ready_with_mock_pipeline(
+    api_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("core.readiness.settings.ready_requires_index", False)
     r = api_client.get("/health/ready")
     body = r.json()
+    assert r.status_code == 200
     assert body["pipeline_loaded"] is True
+    assert body["status"] == "ready"

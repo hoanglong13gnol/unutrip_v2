@@ -1,4 +1,5 @@
 import { db } from "../db.js";
+import { PLACE_ID_LEGACY_FALLBACK } from "../config/env.js";
 
 const IGNORABLE_MYSQL_ERRORS = new Set(["ER_NO_SUCH_TABLE", "ER_BAD_FIELD_ERROR"]);
 
@@ -63,17 +64,19 @@ export async function getDestinationIdByRagPlaceId(placeId) {
       }
     }
 
-    try {
-      const legacy = await db.get(`SELECT id AS destination_id FROM destinations WHERE id = ? LIMIT 1`, [
-        idNum
-      ]);
+    if (PLACE_ID_LEGACY_FALLBACK) {
+      try {
+        const legacy = await db.get(`SELECT id AS destination_id FROM destinations WHERE id = ? LIMIT 1`, [
+          idNum
+        ]);
 
-      if (legacy?.destination_id != null) {
-        return Number(legacy.destination_id);
-      }
-    } catch (error) {
-      if (!isIgnorableSchemaError(error)) {
-        throw error;
+        if (legacy?.destination_id != null) {
+          return Number(legacy.destination_id);
+        }
+      } catch (error) {
+        if (!isIgnorableSchemaError(error)) {
+          throw error;
+        }
       }
     }
   }
@@ -97,17 +100,19 @@ export async function getDestinationIdByRagPlaceId(placeId) {
       }
     }
 
-    try {
-      const legacy = await db.get(`SELECT id AS destination_id FROM destinations WHERE id = ? LIMIT 1`, [
-        idNum
-      ]);
+    if (PLACE_ID_LEGACY_FALLBACK) {
+      try {
+        const legacy = await db.get(`SELECT id AS destination_id FROM destinations WHERE id = ? LIMIT 1`, [
+          idNum
+        ]);
 
-      if (legacy?.destination_id != null) {
-        return Number(legacy.destination_id);
-      }
-    } catch (error) {
-      if (!isIgnorableSchemaError(error)) {
-        throw error;
+        if (legacy?.destination_id != null) {
+          return Number(legacy.destination_id);
+        }
+      } catch (error) {
+        if (!isIgnorableSchemaError(error)) {
+          throw error;
+        }
       }
     }
   }
@@ -126,18 +131,20 @@ export async function getDestinationIdByRagPlaceId(placeId) {
     }
   }
 
-  try {
-    const legacyRag = await db.get(
-      `SELECT id AS destination_id FROM destinations WHERE rag_place_id = ? LIMIT 1`,
-      [pid]
-    );
+  if (PLACE_ID_LEGACY_FALLBACK) {
+    try {
+      const legacyRag = await db.get(
+        `SELECT id AS destination_id FROM destinations WHERE rag_place_id = ? LIMIT 1`,
+        [pid]
+      );
 
-    if (legacyRag?.destination_id != null) {
-      return Number(legacyRag.destination_id);
-    }
-  } catch (error) {
-    if (!isIgnorableSchemaError(error)) {
-      throw error;
+      if (legacyRag?.destination_id != null) {
+        return Number(legacyRag.destination_id);
+      }
+    } catch (error) {
+      if (!isIgnorableSchemaError(error)) {
+        throw error;
+      }
     }
   }
 

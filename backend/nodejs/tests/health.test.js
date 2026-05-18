@@ -20,10 +20,23 @@ describe("HTTP health", () => {
       "fetch",
       vi.fn(async (url) => {
         const u = String(url);
-        if (u.includes("/health") && !u.includes("/health/ready")) {
+        if (u.includes("/health/ready")) {
+          return new Response(
+            JSON.stringify({
+              status: "ready",
+              pipeline_loaded: true,
+              bm25_index_exists: true,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+        if (u.includes("/health")) {
           return new Response(JSON.stringify({ status: "ok" }), {
             status: 200,
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
           });
         }
         return new Response("not found", { status: 404 });

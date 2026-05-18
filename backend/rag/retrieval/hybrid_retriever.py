@@ -5,6 +5,7 @@ from core.config import settings
 from retrieval.bm25_retriever import BM25Retriever
 from retrieval.fusion import reciprocal_rank_fusion
 from retrieval.intent_parser import IntentParser, ParsedIntent
+from retrieval.rerank import rerank_candidates
 from retrieval.text_utils import normalize_text
 
 
@@ -35,6 +36,14 @@ class HybridRetriever:
             enriched["reasons"] = reasons
 
             scored.append(enriched)
+
+        rerank_k = max(top_k * 2, 16)
+        scored, rerank_mode = rerank_candidates(
+            query,
+            scored,
+            retriever=self.bm25,
+            top_k=rerank_k,
+        )
 
         scored.sort(key=lambda x: x["final_score"], reverse=True)
 
@@ -71,6 +80,7 @@ class HybridRetriever:
                 "scored_count": len(scored),
                 "final_count": len(deduped),
                 "fusion": self._last_fusion_debug,
+                "rerank_mode": rerank_mode,
             },
         }
 
@@ -139,6 +149,7 @@ class HybridRetriever:
             "fused_count": len(fused),
         }
         return fused
+
     def _name_dedup_key(self, title: str | None) -> str:
         name = normalize_text(str(title or ""))
 

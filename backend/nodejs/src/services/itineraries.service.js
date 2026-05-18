@@ -1,6 +1,6 @@
 import { daysBetweenInclusive, toIsoDate } from "../utils.js";
 import * as itinerariesRepository from "../repositories/itineraries.repository.js";
-import * as placeIdMapRepository from "../repositories/placeIdMap.repository.js";
+import * as placeIdMapService from "./placeIdMap.service.js";
 import { withTransaction } from "../shared/db/withTransaction.js";
 import { DEFAULT_AI_ITINERARY_TIME_SLOTS } from "../shared/utils/timeSlots.js";
 import {
@@ -474,8 +474,7 @@ export async function createItineraryFromAiOption({ userId, payload }) {
 
   for (const item of selectedDestinations) {
     const directId = item?.destinationId ?? item?.destination_id;
-    const rawPlaceId =
-      item?.rawPlaceId ?? item?.raw_place_id ?? item?.placeId ?? item?.place_id;
+    const rawPlaceId = placeIdMapService.extractRawPlaceId(item);
 
     if (
       directId !== null &&
@@ -484,17 +483,17 @@ export async function createItineraryFromAiOption({ userId, payload }) {
       Number(directId) > 0
     ) {
       if (rawPlaceId) {
-        destinationIdByRawPlaceId.set(String(rawPlaceId), Number(directId));
+        destinationIdByRawPlaceId.set(rawPlaceId, Number(directId));
       }
-      continue;
     }
+  }
 
-    if (!rawPlaceId) continue;
-
-    const destinationId = await placeIdMapRepository.getDestinationIdByRagPlaceId(rawPlaceId);
-
-    if (destinationId) {
-      destinationIdByRawPlaceId.set(String(rawPlaceId), Number(destinationId));
+  const { resolved: rawPlaceMap } = await placeIdMapService.resolveRawPlaceIdsFromItems(
+    selectedDestinations
+  );
+  for (const [rawPlaceId, destinationId] of rawPlaceMap) {
+    if (!destinationIdByRawPlaceId.has(rawPlaceId)) {
+      destinationIdByRawPlaceId.set(rawPlaceId, destinationId);
     }
   }
 
@@ -547,9 +546,7 @@ export async function createItineraryFromAiOption({ userId, payload }) {
 
       for (let index = 0; index < items.length; index++) {
         const item = items[index];
-        const rawPlaceId =
-          item?.rawPlaceId ?? item?.raw_place_id ?? item?.placeId ?? item?.place_id;
-
+        const rawPlaceId = placeIdMapService.extractRawPlaceId(item);
         const directId = item?.destinationId ?? item?.destination_id;
 
         let destinationId = null;
@@ -562,7 +559,7 @@ export async function createItineraryFromAiOption({ userId, payload }) {
         ) {
           destinationId = Number(directId);
         } else if (rawPlaceId) {
-          destinationId = destinationIdByRawPlaceId.get(String(rawPlaceId));
+          destinationId = destinationIdByRawPlaceId.get(rawPlaceId);
         }
 
         if (!destinationId) continue;

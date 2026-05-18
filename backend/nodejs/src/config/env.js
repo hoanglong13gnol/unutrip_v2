@@ -10,6 +10,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
 const DEFAULT_JWT_SECRET = "smarttravel_dev_secret_change_me";
+const MIN_JWT_SECRET_LEN = 32;
+const MIN_RAG_KEY_LEN = 16;
+const WEAK_SECRET_FRAGMENTS = [
+  "changeme",
+  "change_me",
+  "your_jwt",
+  "secret_key",
+  "password",
+  "paste_your",
+  "example",
+  "smarttravel_dev_secret",
+];
 
 /** Base URL FastAPI RAG. Node admin gọi `/admin/*` qua URL này; nếu RAG bật `RAG_ADMIN_API_KEY`, đặt cùng giá trị trong `RAG_ADMIN_API_KEY` (Node) — gửi qua header `X-RAG-Internal-Key`. */
 export const RAG_BASE_URL =
@@ -25,6 +37,13 @@ export function isDefaultJwtSecret() {
   return getJwtSecret() === DEFAULT_JWT_SECRET;
 }
 
+function isWeakSecret(value, minLen = MIN_RAG_KEY_LEN) {
+  const s = String(value || "").trim();
+  if (s.length < minLen) return true;
+  const lower = s.toLowerCase();
+  return WEAK_SECRET_FRAGMENTS.some((frag) => lower.includes(frag));
+}
+
 /**
  * Call once at process startup (before accepting traffic).
  */
@@ -32,16 +51,41 @@ export function assertSafeProductionConfig() {
   const nodeEnv = process.env.NODE_ENV || "development";
   if (nodeEnv !== "production") return;
 
-  if (isDefaultJwtSecret()) {
+  if (isDefaultJwtSecret() || isWeakSecret(getJwtSecret(), MIN_JWT_SECRET_LEN)) {
     throw new Error(
-      "[config] NODE_ENV=production requires JWT_SECRET to be set (not the dev default)."
+      "[config] NODE_ENV=production requires a strong JWT_SECRET (>= 32 chars, not the dev default)."
     );
   }
 
-  if (!process.env.RAG_INTERNAL_API_KEY?.trim()) {
-    console.warn(
-      "[config] RAG_INTERNAL_API_KEY is unset. Set the same value in Node and FastAPI RAG for production."
+  const internal = process.env.RAG_INTERNAL_API_KEY?.trim();
+  const admin = process.env.RAG_ADMIN_API_KEY?.trim();
+
+  if (!internal) {
+    throw new Error(
+      "[config] NODE_ENV=production requires RAG_INTERNAL_API_KEY (same value on Node and FastAPI RAG)."
     );
+  }
+  if (isWeakSecret(internal)) {
+    throw new Error("[config] RAG_INTERNAL_API_KEY is too short or looks like a placeholder.");
+  }
+
+  if (!admin) {
+    throw new Error(
+      "[config] NODE_ENV=production requires RAG_ADMIN_API_KEY (separate from RAG_INTERNAL_API_KEY)."
+    );
+  }
+  if (isWeakSecret(admin)) {
+    throw new Error("[config] RAG_ADMIN_API_KEY is too short or looks like a placeholder.");
+  }
+  if (admin === internal) {
+    throw new Error("[config] RAG_ADMIN_API_KEY must differ from RAG_INTERNAL_API_KEY in production.");
+  }
+
+  const ragDebug = String(process.env.RAG_DEBUG || "")
+    .trim()
+    .toLowerCase();
+  if (["1", "true", "yes", "on"].includes(ragDebug)) {
+    throw new Error("[config] RAG_DEBUG must be false in production.");
   }
 }
 
@@ -77,6 +121,17 @@ export const RAG_FETCH_MAX_ATTEMPTS = Math.max(1, envInt("RAG_FETCH_MAX_ATTEMPTS
 
 /** Skip RAG probe in GET /api/health/ready (use when RAG is optional in an environment). */
 export const HEALTHCHECK_SKIP_RAG = envBool("HEALTHCHECK_SKIP_RAG", false);
+
+/**
+ * Phase 7 — v2 place tables only (no legacy `destinations` fallback in place-id resolution).
+ * When true, overrides PLACE_ID_LEGACY_FALLBACK to false.
+ */
+export const USE_V2_PLACE_TABLES = envBool("USE_V2_PLACE_TABLES", false);
+
+/** Allow legacy `destinations` lookups when v2 map misses (default true for old XAMPP schemas). */
+export const PLACE_ID_LEGACY_FALLBACK = USE_V2_PLACE_TABLES
+  ? false
+  : envBool("PLACE_ID_LEGACY_FALLBACK", true);
 
 /** Timeout for optional local AI_MODEL_URL requests. */
 export const AI_MODEL_FETCH_TIMEOUT_MS = envInt("AI_MODEL_FETCH_TIMEOUT_MS", 120_000);

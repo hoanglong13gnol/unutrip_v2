@@ -1,7 +1,8 @@
 """
 Verify rag_artifacts_manifest.json matches on-disk corpus and BM25 index (CI guard).
 
-Exit 1 on mismatch. Exit 0 if manifest missing (warn) or files missing with --allow-missing.
+Exit 1 on mismatch. Default (strict): corpus + index + manifest must all match.
+Use --allow-missing for local dev when only the tracked manifest exists without large files.
 """
 
 from __future__ import annotations
@@ -15,38 +16,56 @@ from core.artifacts import load_manifest, sha256_file
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--allow-missing", action="store_true")
-    args = ap.parse_args()
-
+def verify_manifest(*, allow_missing: bool = False) -> int:
     m = load_manifest()
     if not m:
-        print("WARN: no manifest; run scripts/06_build_bm25_index.py")
-        sys.exit(0 if args.allow_missing else 1)
+        print("ERROR: no manifest; run jobs/build_rag_artifacts.py or scripts/06_build_bm25_index.py")
+        return 0 if allow_missing else 1
 
     corpus = ROOT / Path(m["corpus_path"])
     bm25 = ROOT / Path(m["bm25_index_path"])
 
     if not bm25.exists():
-        print("ERROR: BM25 index path from manifest does not exist:", bm25)
-        sys.exit(0 if args.allow_missing else 1)
+        print("ERROR: BM25 index missing:", bm25)
+        return 0 if allow_missing else 1
 
     b_sha = sha256_file(bm25)
     if b_sha != m.get("bm25_sha256"):
-        print("ERROR: bm25_sha256 mismatch", b_sha, m.get("bm25_sha256"))
-        sys.exit(1)
+        print("ERROR: bm25_sha256 mismatch", b_sha, "!=", m.get("bm25_sha256"))
+        return 1
 
     if not corpus.exists():
-        print("WARN: corpus missing (expected at", corpus, ") — BM25 index checksum OK")
-        sys.exit(0 if args.allow_missing else 1)
+        print("ERROR: corpus missing:", corpus)
+        return 0 if allow_missing else 1
 
     c_sha = sha256_file(corpus)
     if c_sha != m.get("corpus_sha256"):
-        print("ERROR: corpus_sha256 mismatch", c_sha, m.get("corpus_sha256"))
-        sys.exit(1)
+        print("ERROR: corpus_sha256 mismatch", c_sha, "!=", m.get("corpus_sha256"))
+        return 1
 
-    print("OK manifest matches corpus + bm25 index")
+    doc_count = m.get("document_count")
+    print(
+        "OK manifest matches corpus + bm25 index"
+        + (f" ({doc_count} docs)" if doc_count is not None else "")
+    )
+    return 0
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="Pass when corpus/index absent (local dev with manifest-only checkout)",
+    )
+    ap.add_argument(
+        "--strict",
+        action="store_true",
+        help="Alias for default CI mode (corpus + index required)",
+    )
+    args = ap.parse_args()
+    allow_missing = args.allow_missing and not args.strict
+    sys.exit(verify_manifest(allow_missing=allow_missing))
 
 
 if __name__ == "__main__":

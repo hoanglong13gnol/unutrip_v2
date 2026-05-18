@@ -1,9 +1,10 @@
 """
 One-shot RAG artifact build: optional DB corpus export + BM25/TF-IDF index + manifest.
 
-Usage (from repo root .env with DB_* if using --from-db):
+Usage (from backend/rag with .env DB_* if using --from-db):
   python jobs/build_rag_artifacts.py
   python jobs/build_rag_artifacts.py --from-db
+  python jobs/build_rag_artifacts.py --from-fixture
   python jobs/build_rag_artifacts.py --skip-export
 """
 
@@ -24,14 +25,32 @@ def run(cmd: list[str]) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--from-db", action="store_true", help="Run export_rag_knowledge_base_to_corpus.py first")
-    ap.add_argument("--skip-export", action="store_true", help="Skip DB export (use existing JSONL)")
+    ap.add_argument("--from-db", action="store_true", help="Export rag_knowledge_base → JSONL, then build index")
+    ap.add_argument(
+        "--from-fixture",
+        action="store_true",
+        help="Copy tests/fixtures/* into data/processed, then build index (CI / offline)",
+    )
+    ap.add_argument(
+        "--export-places",
+        action="store_true",
+        help="With --from-db, also export app_places to places_app.json",
+    )
+    ap.add_argument("--skip-export", action="store_true", help="Skip corpus export (use existing JSONL)")
     args = ap.parse_args()
+
+    if args.from_db and args.from_fixture:
+        ap.error("Use only one of --from-db or --from-fixture")
 
     py = sys.executable
 
+    if args.from_fixture and not args.skip_export:
+        run([py, str(ROOT / "scripts" / "sync_fixture_data.py")])
+
     if args.from_db and not args.skip_export:
         run([py, str(ROOT / "scripts" / "export_rag_knowledge_base_to_corpus.py")])
+        if args.export_places:
+            run([py, str(ROOT / "scripts" / "export_app_places_to_json.py")])
 
     run([py, str(ROOT / "scripts" / "06_build_bm25_index.py")])
 

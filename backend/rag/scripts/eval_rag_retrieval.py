@@ -14,6 +14,7 @@ import json
 import sys
 from pathlib import Path
 
+from core.config import settings
 from retrieval.hybrid_retriever import HybridRetriever
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +52,11 @@ def main() -> None:
         default=0.5,
         help="CI: fail if province_norm_accuracy below threshold",
     )
+    ap.add_argument(
+        "--require-labels",
+        action="store_true",
+        help="CI: fail when no case has relevant_place_ids",
+    )
     args = ap.parse_args()
 
     bm25 = ROOT / "data" / "indexes" / "bm25_index.pkl"
@@ -61,10 +67,18 @@ def main() -> None:
     cases = json.loads(args.golden.read_text(encoding="utf-8"))
     retriever = HybridRetriever()
 
+    print(
+        "retrieval_config:",
+        f"rrf={settings.enable_rrf_fusion}",
+        f"rerank={settings.enable_rerank}",
+        f"cross_encoder={settings.enable_cross_encoder}",
+    )
+
     hit_scores: list[float] = []
     mrr_scores: list[float] = []
     prov_hits = 0
     prov_total = 0
+    rerank_mode: str | None = None
 
     for row in cases:
         q = row["query"]
@@ -72,6 +86,8 @@ def main() -> None:
         top_k = int(row.get("top_k", 8))
         out = retriever.retrieve(q, top_k=top_k)
         ranked = [str(x.get("place_id")) for x in out.get("results", []) if x.get("place_id")]
+        if rerank_mode is None:
+            rerank_mode = (out.get("debug") or {}).get("rerank_mode")
 
         if rel:
             hit_scores.append(hit_at_k(rel, ranked, min(5, top_k)))
@@ -83,6 +99,14 @@ def main() -> None:
             intent = (out.get("intent") or {}).get("province_norm")
             if intent == exp:
                 prov_hits += 1
+
+    if rerank_mode:
+        print(f"rerank_mode: {rerank_mode}")
+
+    labeled = sum(1 for row in cases if row.get("relevant_place_ids"))
+    if args.require_labels and labeled == 0:
+        print("CI FAIL: --require-labels but golden set has no relevant_place_ids")
+        sys.exit(1)
 
     mean_hit5: float | None = None
     if hit_scores:

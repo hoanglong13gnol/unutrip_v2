@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from core.artifacts import manifest_status_block
 from core.config import settings
+from core.readiness import evaluate_readiness
 
 router = APIRouter(tags=["Health"])
 
@@ -24,15 +25,14 @@ def health() -> dict[str, Any]:
 
 @router.get("/health/ready")
 def health_ready(request: Request) -> JSONResponse:
-    bm25_index = settings.indexes_dir / "bm25_index.pkl"
     pipeline = getattr(request.app.state, "pipeline", None)
-    ok = pipeline is not None and bm25_index.exists()
+    ok, checks = evaluate_readiness(pipeline_loaded=pipeline is not None)
+
     body: dict[str, Any] = {
         "status": "ready" if ok else "not_ready",
         "service": settings.project_name,
         "version": settings.api_version,
-        "pipeline_loaded": pipeline is not None,
-        "bm25_index_exists": bm25_index.exists(),
+        **checks,
     }
     if ok:
         return JSONResponse(body)
@@ -46,11 +46,13 @@ def runtime_status() -> dict[str, Any]:
     return {
         "service": "UnuTrip RAG v2",
         "runtime_mode": settings.ai_runtime_mode,
+        "rag_env": settings.rag_env,
         "enable_gemini": settings.enable_gemini,
         "enable_lora": settings.enable_lora,
         "enable_validator": settings.enable_validator,
         "gemini_model": settings.gemini_model if settings.enable_gemini else None,
         "gemini_configured": bool(settings.gemini_api_key),
+        "metrics_enabled": settings.enable_metrics,
         "places_master_ready": settings.places_master_file.exists(),
         "places_app_ready": settings.places_app_file.exists(),
         "places_app_reviewed_ready": places_app_reviewed_file.exists(),

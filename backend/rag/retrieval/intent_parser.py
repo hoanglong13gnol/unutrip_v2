@@ -26,7 +26,7 @@ PROVINCE_ALIASES = {
     "saigon": "tp_ho_chi_minh",
 
     "hue": "thua_thien_hue",
-    "thua thien hue": "thua thien hue",
+    "thua thien hue": "thua_thien_hue",
 
     "quang ninh": "quang_ninh",
     "ha long": "quang_ninh",

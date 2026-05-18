@@ -32,9 +32,16 @@ jobs:
         run: ruff check app core domain generation llm pipelines retrieval services tests scripts
       - name: Import app
         run: python -c "from app.main import app; print(app.title)"
-      - name: Unit & API tests
+      - name: Build CI fixture artifacts
+        run: python jobs/build_rag_artifacts.py --from-fixture
+      - name: Unit, API & retrieval tests
         run: python -m pytest tests/ -q
-      - name: Verify artifacts
-        run: python scripts/verify_rag_artifacts.py --allow-missing
-      - name: Offline eval (retrieval smoke)
-        run: python scripts/eval_rag_retrieval.py --ci --min-province-accuracy 0.5
+      - name: Verify artifacts (strict)
+        run: python scripts/verify_rag_artifacts.py --strict
+      - name: Offline eval (fixture golden set)
+        run: >-
+          python scripts/eval_rag_retrieval.py --ci
+          --golden eval/golden_queries_ci.json
+          --require-labels
+          --min-province-accuracy 1.0
+          --min-hit-at5 0.75

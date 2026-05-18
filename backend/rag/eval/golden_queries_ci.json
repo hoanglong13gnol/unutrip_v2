@@ -1,0 +1,26 @@
+[
+  {
+    "query": "đi biển ở Khánh Hòa",
+    "relevant_place_ids": ["FIX_KH_BEACH_01", "FIX_KH_BEACH_02"],
+    "expect_province_norm": "khanh_hoa",
+    "top_k": 8
+  },
+  {
+    "query": "đi Huế với bố mẹ lớn tuổi, ít đi bộ",
+    "relevant_place_ids": ["FIX_HUE_TEMPLE_01", "FIX_HUE_RIVER_01"],
+    "expect_province_norm": "thua_thien_hue",
+    "top_k": 8
+  },
+  {
+    "query": "tham quan đại nội huế",
+    "relevant_place_ids": ["FIX_HUE_TEMPLE_01"],
+    "expect_province_norm": "thua_thien_hue",
+    "top_k": 8
+  },
+  {
+    "query": "hon mun lặn biển khánh hòa",
+    "relevant_place_ids": ["FIX_KH_BEACH_02"],
+    "expect_province_norm": "khanh_hoa",
+    "top_k": 8
+  }
+]

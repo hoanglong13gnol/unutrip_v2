@@ -1,0 +1,57 @@
+[
+  {
+    "place_id": "FIX_KH_BEACH_01",
+    "id": 900001,
+    "app_place_id": 900001,
+    "name": "Bãi biển Trần Phú Nha Trang",
+    "province": "Khánh Hòa",
+    "province_norm": "khanh_hoa",
+    "city": "Nha Trang",
+    "category_main": "beach",
+    "category_sub": "swim",
+    "budget_level_norm": "low",
+    "walking_level_norm": "easy",
+    "kid_friendly_norm": true,
+    "elderly_friendly_norm": true,
+    "quality_score": 4.5,
+    "recommended_use_norm": "swim",
+    "search_text": "bãi biển nha trang khánh hòa tắm biển",
+    "is_active": true
+  },
+  {
+    "place_id": "FIX_KH_BEACH_02",
+    "id": 900002,
+    "name": "Hòn Mun",
+    "province": "Khánh Hòa",
+    "province_norm": "khanh_hoa",
+    "city": "Nha Trang",
+    "category_main": "beach",
+    "walking_level_norm": "medium",
+    "quality_score": 4.3,
+    "is_active": true
+  },
+  {
+    "place_id": "FIX_HUE_TEMPLE_01",
+    "id": 900003,
+    "name": "Đại Nội Huế",
+    "province": "Thừa Thiên Huế",
+    "province_norm": "thua_thien_hue",
+    "city": "Huế",
+    "category_main": "culture",
+    "walking_level_norm": "easy",
+    "elderly_friendly_norm": true,
+    "quality_score": 4.7,
+    "is_active": true
+  },
+  {
+    "place_id": "FIX_HUE_RIVER_01",
+    "id": 900004,
+    "name": "Sông Hương về đêm",
+    "province": "Thừa Thiên Huế",
+    "province_norm": "thua_thien_hue",
+    "walking_level_norm": "easy",
+    "elderly_friendly_norm": true,
+    "quality_score": 4.4,
+    "is_active": true
+  }
+]

@@ -15,8 +15,11 @@ from app.routers import rag as rag_router
 from app.routers.ai_itinerary import router as ai_itinerary_router
 from core.config import get_log_level, settings
 from core.logging_config import configure_logging
+from core.metrics import install_metrics_route
+from core.production import assert_production_config
 from core.redis_client import close_redis, init_redis
 from core.security import is_debug_mode
+from llm.gemini_executor import shutdown_gemini_executor
 from pipelines.rag_pipeline import RagPipeline
 from services.rag_service import RagService
 
@@ -26,6 +29,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(get_log_level(), json_logs=settings.log_json)
+    assert_production_config()
     app.state.redis_client = init_redis(settings.redis_url)
 
     logger.info("Starting RAG pipeline…")
@@ -39,6 +43,7 @@ async def lifespan(app: FastAPI):
     logger.info("RAG service shutting down")
     app.state.pipeline = None
     app.state.rag_service = None
+    shutdown_gemini_executor(wait=False)
     close_redis()
     app.state.redis_client = None
 
@@ -63,6 +68,7 @@ def _mount_api_routes(target: FastAPI | APIRouter) -> None:
 
 
 _mount_api_routes(app)
+install_metrics_route(app)
 
 api_v1 = APIRouter(prefix="/v1")
 _mount_api_routes(api_v1)
