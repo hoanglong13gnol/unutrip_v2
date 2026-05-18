@@ -126,16 +126,16 @@ python scripts/eval_rag_retrieval.py --ci --min-province-accuracy 0.5
 
 ---
 
-## Commit Git (phase 0–3)
+## Commit Git (đã tạo trên `master`)
 
-| Commit | Message gợi ý |
-|--------|----------------|
-| 1 | `chore(rag): phase 0 repo hygiene and artifact policy` |
-| 2 | `refactor(rag): phase 1 package layout and editable install` |
-| 3 | `refactor(rag): phase 2 split admin and itinerary modules` |
-| 4 | `test(rag): phase 3 API tests, contracts, ruff and CI` |
+| # | SHA (rút gọn) | Message |
+|---|---------------|---------|
+| 1 | `dc6285c` | `chore(rag): phase 0 repo hygiene and artifact policy` |
+| 2 | `b64420a` | `refactor(rag): phases 1-2 package layout and split routers` |
+| 3 | `30ce73f` | `test(rag): phase 3 API tests, contracts, ruff and CI` |
+| 4 | `41f1ae7` | `chore: add UNUtrip v2 monorepo scaffold and clean roadmap` |
 
-File monorepo còn lại (Android, Node, Docker, `docs/`) nằm commit khởi tạo hoặc commit riêng `chore: add UNUtrip v2 monorepo scaffold` tùy chiến lược team.
+Xem log: `git log --oneline -4`
 
 ---
 
