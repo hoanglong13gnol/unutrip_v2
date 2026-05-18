@@ -34,6 +34,14 @@ if (-not (Test-Path $zipPath)) {
     Write-Error "Zip not found: $zipPath"
 }
 
+$metaCheck = "$zipPath.RELEASE.json"
+if (Test-Path $metaCheck) {
+    $docCount = (Get-Content $metaCheck -Raw | ConvertFrom-Json).document_count
+    if ($docCount -lt 100) {
+        Write-Warning "Zip has only $docCount documents - likely fixture index. Run without -SkipBuild after .env DB_NAME points to production DB."
+    }
+}
+
 Write-Host "`n== Stage for RAG_ARTIFACT_SOURCE_DIR =="
 $stage = Join-Path $Root $StageDir
 if (Test-Path $stage) {
@@ -73,7 +81,11 @@ if ($S3Uri) {
     Write-Host "`nOptional S3 upload:"
     Write-Host '  $env:RAG_ARTIFACT_S3_URI = "s3://your-bucket/releases/unutrip-rag-artifacts-prod.zip"'
     Write-Host "  .\scripts\publish_rag_bundle.ps1 -SkipBuild"
-    Write-Host "`nGitHub Release (manual): upload $zipPath as release asset, then set RAG_ARTIFACT_BUNDLE_URL to the asset URL."
+    Write-Host "`nGitHub Release (API):"
+    Write-Host '  $env:GITHUB_TOKEN = "ghp_..."   # repo Contents read/write'
+    Write-Host "  python scripts/upload_rag_bundle_github.py"
+    Write-Host "`nGitHub Release (CLI): gh auth login && gh release create TAG `"$zipPath`""
+    Write-Host "Or Actions: workflow 'RAG artifact release (production DB)' (secrets RAG_DB_*)."
 }
 
 $meta = "$zipPath.RELEASE.json"

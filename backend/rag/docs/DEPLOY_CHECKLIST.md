@@ -20,12 +20,30 @@
    .\scripts\publish_rag_bundle.ps1
    # staged dir → RAG_ARTIFACT_SOURCE_DIR=deploy/staging-rag-data
    ```
-3. Upload `unutrip-rag-artifacts-prod.zip` to S3 or GitHub Release asset.
+3. Upload `unutrip-rag-artifacts-prod.zip` to S3 or GitHub Release.
+
+   **GitHub (local, PAT):**
+   ```powershell
+   $env:GITHUB_TOKEN = "ghp_..."   # repo: Contents read/write
+   python scripts/upload_rag_bundle_github.py
+   # prints browser_download_url -> RAG_ARTIFACT_BUNDLE_URL
+   ```
+
+   **GitHub (CLI):**
+   ```powershell
+   gh auth login
+   gh release create rag-artifacts-2026-05-19 backend/rag/dist/unutrip-rag-artifacts-prod.zip --prerelease
+   ```
+
+   **GitHub Actions (team DB):** workflow `RAG artifact release (production DB)` — secrets `RAG_DB_HOST`, `RAG_DB_PORT`, `RAG_DB_USER`, `RAG_DB_PASSWORD`, `RAG_DB_NAME`.
+
+   **S3:**
    ```powershell
    $env:RAG_ARTIFACT_S3_URI = "s3://YOUR-BUCKET/releases/unutrip-rag-artifacts-prod.zip"
    .\scripts\publish_rag_bundle.ps1 -SkipBuild
    ```
-   Then set `RAG_ARTIFACT_BUNDLE_URL` to the **HTTPS** URL (must end with `.zip`).
+
+   Set `RAG_ARTIFACT_BUNDLE_URL` to the **HTTPS** URL (must end with `.zip`).
 4. Commit **only** `indexes/rag_artifacts_manifest.json` when checksums change (optional, for audit).
 
 ## Runtime (container / VM)

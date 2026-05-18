@@ -1,0 +1,62 @@
+# Manual: build RAG artifacts from MySQL (rag_knowledge_base) and attach to a GitHub Release.
+# Repo secrets required: RAG_DB_HOST, RAG_DB_PORT, RAG_DB_USER, RAG_DB_PASSWORD, RAG_DB_NAME
+
+name: RAG artifact release (production DB)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Git tag for release (e.g. rag-artifacts-2026-05-19)"
+        required: true
+        default: "rag-artifacts-2026-05-19"
+      prerelease:
+        description: "Mark as pre-release"
+        type: boolean
+        default: true
+
+jobs:
+  release-prod-bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend/rag
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/rag/pyproject.toml
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Export corpus and build index from DB
+        env:
+          DB_HOST: ${{ secrets.RAG_DB_HOST }}
+          DB_PORT: ${{ secrets.RAG_DB_PORT }}
+          DB_USER: ${{ secrets.RAG_DB_USER }}
+          DB_PASSWORD: ${{ secrets.RAG_DB_PASSWORD }}
+          DB_NAME: ${{ secrets.RAG_DB_NAME }}
+        run: python jobs/build_rag_artifacts.py --from-db --export-places
+
+      - name: Verify artifacts (strict)
+        run: python scripts/verify_rag_artifacts.py --strict
+
+      - name: Package zip
+        run: python jobs/package_rag_artifacts.py -o dist/unutrip-rag-artifacts-prod.zip
+
+      - name: Create GitHub Release and upload zip
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          name: RAG production artifacts (${{ inputs.release_tag }})
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: true
+          files: backend/rag/dist/unutrip-rag-artifacts-prod.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
