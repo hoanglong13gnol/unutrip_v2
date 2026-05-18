@@ -1,0 +1,68 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+**/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+
+# Local backup trees (keep out of VCS)
+/backups/
+
+.env
+
+!.env.example
+
+# RAG generated intermediates & logs (keep repo lean; regenerate locally)
+backend/rag/_archive/
+backend/rag/reports/
+backend/rag/data/image_pipeline/reports/
+
+# RAG large artifacts — track manifest only; rebuild: jobs/build_rag_artifacts.py
+backend/rag/data/indexes/bm25_index.pkl
+backend/rag/data/processed/places_rag_documents.jsonl
+backend/rag/data/processed/places_master.parquet
+backend/rag/data/processed/places_app.json
+backend/rag/data/processed/places_itinerary.json
+backend/rag/data/processed/places_app_reviewed.json
+!backend/rag/data/indexes/rag_artifacts_manifest.json
+
+# Local tooling vendored binaries (retrieve on each machine if needed)
+.tools/
+
+# One-off rendered diagram folders from PlantUML previews (sources stay in-repo)
+_tmp_out/
+_tmp_out2/
+_tmp_out3/
+_tmp_puml_out/
+
+# Redundant bundle / archives (diagram sources are tracked)
+verified_uml.rar
+
+# Duplicate thesis Word copy (same blob as docx_doan/chuong_2_docx_baocao.docx)
+/chuong_2_docx_baocao.docx
+
+# Scratch screenshots at repo root (not part of diagrams/)
+/t2.png
+/t3.png
+/t4.png
+/test.png
+
+# Dependencies
+node_modules/
+**/node_modules/
+backend/nodejs/node_modules/
