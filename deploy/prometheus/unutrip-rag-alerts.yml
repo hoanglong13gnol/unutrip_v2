@@ -1,0 +1,50 @@
+# Example Prometheus alert rules for UnuTrip RAG (Phase E / P2).
+# Mount in Prometheus: rule_files: ["unutrip-rag-alerts.yml"]
+# Requires RAG_ENABLE_METRICS=true and scrape target /metrics on port 8001.
+
+groups:
+  - name: unutrip_rag
+    rules:
+      - alert: RagNotReady
+        expr: |
+          probe_success{job="unutrip-rag-ready"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: RAG readiness probe failing
+          description: GET /health/ready returned non-200 for more than 2 minutes.
+
+      - alert: RagHighErrorRate
+        expr: |
+          sum(rate(rag_http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(rag_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: RAG HTTP 5xx rate above 5%
+          description: Check RAG logs and upstream Gemini quota.
+
+      - alert: RagGeminiErrors
+        expr: increase(rag_gemini_requests_total{outcome="error"}[10m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Gemini errors spiking
+          description: More than 5 Gemini errors in 10 minutes.
+
+      - alert: RagLatencyP95High
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(rag_http_request_duration_seconds_bucket[5m])) by (le, path_group)
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: RAG p95 latency above 30s
+          description: Investigate retrieval index, Gemini timeout, or load.

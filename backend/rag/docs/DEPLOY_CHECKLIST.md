@@ -61,6 +61,10 @@ Entrypoint runs `scripts/fetch_rag_artifacts.py` when URL or source dir is set.
 
 Alert on: ready probe failures > 2 min, `rag_gemini_requests_total{outcome="error"}` spike, p95 `rag_http_request_duration_seconds` > SLA.
 
+Example rules: `deploy/prometheus/unutrip-rag-alerts.yml` (see `deploy/prometheus/README.md`).
+
+**CI bundle (fixture, no DB):** GitHub Actions → workflow `RAG artifact package (manual)` → download artifact → set `RAG_ARTIFACT_BUNDLE_URL` or mount volume.
+
 ## Staging E2E (Node ↔ RAG)
 
 1. `docker compose up -d --build` with artifacts mounted or fetched.

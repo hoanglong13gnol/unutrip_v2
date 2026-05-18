@@ -15,7 +15,7 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Phase B — Tách pipeline / scoring / providers | ✅ Xong |
 | Phase C — Mypy, coverage 70%, CI Docker | ✅ Xong |
 | Phase D — Dữ liệu & artifact production | 🟡 Một phần (fetch/package/entrypoint) |
-| Phase E — Deploy / observability | 🟡 Một phần (`docs/DEPLOY_CHECKLIST.md`) |
+| Phase E — Deploy / observability | 🟡 Một phần (checklist + Prometheus rules mẫu) |
 | Phase 8 — Android polish | ⏳ Chưa |
 
 **Chất lượệ hiện tại:** 88+ pytest pass · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
@@ -54,6 +54,15 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Pre-commit | `backend/rag/.pre-commit-config.yaml` (ruff, mypy, pytest pre-push) |
 | CI `rag-ci.yml` | Mypy, coverage, upload `.coverage`, `docker build` |
 | Coverage omit | Admin/itinerary nặng, `rag_pipeline` integration, BM25/hybrid — xem `pyproject.toml` |
+
+### P2 — CI & ops (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| `backend-ci.yml` | Chỉ trigger `backend/nodejs` + `database/` (không trùng RAG) |
+| Backend CI | `docker build` Node + `bash -n` migration script |
+| `rag-artifact-release.yml` | Manual workflow: package fixture zip → Actions artifact |
+| `deploy/prometheus/` | Example alert rules + blackbox ready probe doc |
 
 ### P1 — Schema v2 & Compose migrate (mới)
 
@@ -113,8 +122,9 @@ tests/test_pipeline_city_match.py
 ### Production & vận hành (cao)
 
 - [x] Deploy checklist: `backend/rag/docs/DEPLOY_CHECKLIST.md`
-- [ ] Alerting rules thực tế (Prometheus/Grafana) theo checklist
-- [ ] Branch protection + bắt buộc `rag-ci` / `backend-ci` trên remote
+- [x] Prometheus alert rules mẫu: `deploy/prometheus/unutrip-rag-alerts.yml`
+- [x] Manual CI package fixture bundle: `.github/workflows/rag-artifact-release.yml`
+- [ ] Branch protection + bắt buộc `rag-ci` / `backend-ci` trên remote (GitHub repo settings)
 
 ### Chất lượng code (trung bình)
 

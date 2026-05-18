@@ -1,17 +1,25 @@
-name: Backend & RAG CI
+name: Backend CI
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "backend/rag/**"
       - "backend/nodejs/**"
+      - "database/**"
+      - "docker-compose.yml"
+      - "deploy/**"
+      - ".env.example"
       - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/rag-artifact-release.yml"
   pull_request:
     paths:
-      - "backend/rag/**"
       - "backend/nodejs/**"
+      - "database/**"
+      - "docker-compose.yml"
+      - "deploy/**"
+      - ".env.example"
       - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/rag-artifact-release.yml"
 
 jobs:
   node-check:
@@ -36,3 +44,14 @@ jobs:
         run: npm test
       - name: Syntax check
         run: node --check src/index.js
+      - name: Docker build
+        run: docker build -t unutrip-backend:ci .
+
+  database-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate migration shell script
+        run: bash -n database/scripts/run_migrations.sh
+      - name: List migrations (order check)
+        run: ls -1 database/migrations/[0-9][0-9][0-9]_*.sql | wc -l
