@@ -42,8 +42,17 @@ CI copies tracked fixtures, builds a small BM25 index, and verifies manifest che
 ## Distribution options for full artifacts
 
 1. **CI-only build** (current default) — developers without DB still get green CI via fixtures.
-2. **Release asset / S3** — upload `bm25_index.pkl` + corpus from release job; download in deploy.
-3. **Git LFS** — optional if team wants versioned binaries without bloating normal git objects.
+2. **Release zip + URL** (Phase D) — `python jobs/package_rag_artifacts.py` → upload zip; set `RAG_ARTIFACT_BUNDLE_URL` in deploy.
+3. **Volume mount** — mount host dir with `processed/` + `indexes/` at `/svc/data` or set `RAG_ARTIFACT_SOURCE_DIR`.
+4. **Git LFS** — optional if team wants versioned binaries without bloating normal git objects.
+
+```bash
+# After --from-db build + verify
+python jobs/package_rag_artifacts.py -o dist/unutrip-rag-artifacts.zip
+# Deploy: RAG_ARTIFACT_BUNDLE_URL=https://.../unutrip-rag-artifacts.zip
+```
+
+See `docs/DEPLOY_CHECKLIST.md` for production env vars and health probes.
 
 ## Health / readiness
 

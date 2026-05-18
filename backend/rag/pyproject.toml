@@ -52,6 +52,7 @@ include = [
     "llm*",
     "pipelines*",
     "providers*",
+    "repositories*",
     "retrieval*",
     "services*",
 ]
@@ -140,6 +141,7 @@ known-first-party = [
     "llm",
     "pipelines",
     "providers",
+    "repositories",
     "retrieval",
     "services",
 ]

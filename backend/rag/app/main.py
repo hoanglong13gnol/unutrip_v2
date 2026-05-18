@@ -21,6 +21,7 @@ from core.redis_client import close_redis, init_redis
 from core.security import is_debug_mode
 from llm.gemini_executor import shutdown_gemini_executor
 from pipelines.rag_pipeline import RagPipeline
+from repositories.artifact_store import ensure_runtime_artifacts
 from services.rag_service import RagService
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,9 @@ async def lifespan(app: FastAPI):
     configure_logging(get_log_level(), json_logs=settings.log_json)
     assert_production_config()
     app.state.redis_client = init_redis(settings.redis_url)
+
+    if settings.artifact_fetch_on_startup:
+        ensure_runtime_artifacts()
 
     logger.info("Starting RAG pipeline…")
     pipeline = RagPipeline()

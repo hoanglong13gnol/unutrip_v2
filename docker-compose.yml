@@ -64,6 +64,12 @@ services:
       RAG_CORS_ORIGINS: ${RAG_CORS_ORIGINS:-http://localhost:3000}
       RAG_INTERNAL_API_KEY: ${RAG_INTERNAL_API_KEY:-}
       RAG_ADMIN_API_KEY: ${RAG_ADMIN_API_KEY:-}
+      # Optional: fetch release zip on container start (see backend/rag/docs/DEPLOY_CHECKLIST.md)
+      RAG_ARTIFACT_BUNDLE_URL: ${RAG_ARTIFACT_BUNDLE_URL:-}
+      RAG_ARTIFACT_SOURCE_DIR: ${RAG_ARTIFACT_SOURCE_DIR:-}
+    volumes:
+      # Uncomment after local `jobs/build_rag_artifacts.py --from-db` (or mount release dir):
+      # - ${RAG_ARTIFACT_HOST_DIR:-./backend/rag/data}:/svc/data
     depends_on:
       redis:
         condition: service_healthy

@@ -14,8 +14,8 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | Phase A — Hygiene & deps | ✅ Xong |
 | Phase B — Tách pipeline / scoring / providers | ✅ Xong |
 | Phase C — Mypy, coverage 70%, CI Docker | ✅ Xong |
-| Phase D — Dữ liệu & artifact production | ⏳ Chưa |
-| Phase E — Deploy / observability | ⏳ Chưa |
+| Phase D — Dữ liệu & artifact production | 🟡 Một phần (fetch/package/entrypoint) |
+| Phase E — Deploy / observability | 🟡 Một phần (`docs/DEPLOY_CHECKLIST.md`) |
 | Phase 8 — Android polish | ⏳ Chưa |
 
 **Chất lượệ hiện tại:** 75 pytest pass · ruff sạch · mypy (5 package) sạch · coverage gate **≥70%** (phạm vi đã `omit` trong `pyproject.toml`).
@@ -55,6 +55,17 @@ Bản trước: `README_UPDATING_CLEAN.md` (Phase 0–7). Demo gốc `e:\UNUtrip
 | CI `rag-ci.yml` | Mypy, coverage, upload `.coverage`, `docker build` |
 | Coverage omit | Admin/itinerary nặng, `rag_pipeline` integration, BM25/hybrid — xem `pyproject.toml` |
 
+### Phase D — Artifact production & deploy (mới)
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| `repositories/artifact_store.py` | Copy từ volume dir hoặc giải nén bundle `.zip` |
+| `scripts/fetch_rag_artifacts.py` | CLI + Docker entrypoint khi có `RAG_ARTIFACT_*` |
+| `jobs/package_rag_artifacts.py` | Zip `data/` sau build DB để upload release |
+| `scripts/docker_entrypoint.sh` | Fetch trước `uvicorn` trong image |
+| Docs | `docs/DEPLOY_CHECKLIST.md`, cập nhật `ARTIFACT_POLICY.md` |
+| Còn lại | Build full corpus `--from-db` + upload release (cần MySQL prod) |
+
 ### Test mới (Phase A–C)
 
 ```text
@@ -76,13 +87,14 @@ tests/test_pipeline_city_match.py
 ### Dữ liệu & artifact (cao)
 
 - [ ] Production corpus full: `build_rag_artifacts.py --from-db` → cập nhật manifest (local; không commit `.pkl` / JSONL lớn)
-- [ ] Chiến lược deploy artifact: S3 / release asset / volume mount
+- [x] Chiến lược deploy artifact: zip URL + volume + `package_rag_artifacts.py` / `fetch_rag_artifacts.py`
+- [ ] Upload bundle lên S3/GitHub Release và gắn `RAG_ARTIFACT_BUNDLE_URL` staging/prod
 - [ ] `places_app_reviewed.json` (human review) — tùy chọn
 
 ### Production & vận hành (cao)
 
-- [ ] Deploy checklist: `RAG_ENV=production`, keys, artifact mount, metrics scrape
-- [ ] Alerting: `/metrics`, 503 `/health/ready`
+- [x] Deploy checklist: `backend/rag/docs/DEPLOY_CHECKLIST.md`
+- [ ] Alerting rules thực tế (Prometheus/Grafana) theo checklist
 - [ ] Branch protection + bắt buộc `rag-ci` / `backend-ci` trên remote
 
 ### Chất lượng code (trung bình)
@@ -90,7 +102,7 @@ tests/test_pipeline_city_match.py
 - [ ] Mở rộng coverage: bỏ dần `omit` — test `rag_pipeline` E2E, `place_store`, `data_quality_service`
 - [ ] `travel_rules.py` (~50% coverage) — golden tests theo interest/province
 - [ ] Mypy mở rộng: `retrieval/`, `services/`, `app/` (hiện `follow_imports=skip`)
-- [ ] `repositories/` — artifact loader tách khỏi pipeline (align `RAG_ARCHITECTURE.md`)
+- [x] `repositories/artifact_store.py` — artifact loader (align `RAG_ARCHITECTURE.md`)
 
 ### Retrieval & sản phẩm (trung bình)
 
@@ -163,6 +175,7 @@ backend/rag/
     policies/             # location_filter, generation_router
     response_builder.py
   providers/              # gemini + template adapters
+  repositories/           # artifact_store (Phase D)
   retrieval/
     hybrid_retriever.py
     scoring/              # travel_rules, dedup

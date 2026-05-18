@@ -1,4 +1,4 @@
-.PHONY: clean install install-dev lint typecheck test test-fast quality
+.PHONY: clean install install-dev lint typecheck test test-fast quality fetch-artifacts package-artifacts
 
 clean:
 	python scripts/clean_dev_artifacts.py
@@ -24,3 +24,9 @@ test:
 
 quality: lint typecheck test
 	python scripts/verify_rag_artifacts.py --strict
+
+fetch-artifacts:
+	python scripts/fetch_rag_artifacts.py
+
+package-artifacts:
+	python jobs/package_rag_artifacts.py

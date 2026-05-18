@@ -109,13 +109,25 @@ class Settings(BaseModel):
     enable_metrics: bool = env_bool("RAG_ENABLE_METRICS", False)
     gemini_executor_workers: int = env_int("RAG_GEMINI_EXECUTOR_WORKERS", 4)
 
+    # Production artifacts (Phase D): volume mount dir or release .zip URL
+    artifact_bundle_url: str | None = optional_stripped_url("RAG_ARTIFACT_BUNDLE_URL")
+    artifact_source_dir: Path | None = None
+    artifact_fetch_on_startup: bool = env_bool("RAG_FETCH_ARTIFACTS_ON_START", False)
+
     # Redis (optional): rate limit + Gemini response cache across replicas
     redis_url: str | None = optional_stripped_url("REDIS_URL")
     redis_key_prefix: str = env_str("REDIS_KEY_PREFIX", "unutrip:rag:")
     gemini_response_cache_ttl_seconds: int = env_int("GEMINI_CACHE_TTL_SECONDS", 86400)
 
 
-settings = Settings()
+def _artifact_source_dir_from_env() -> Path | None:
+    raw = os.getenv("RAG_ARTIFACT_SOURCE_DIR", "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser().resolve()
+
+
+settings = Settings(artifact_source_dir=_artifact_source_dir_from_env())
 
 
 def get_log_level() -> str:

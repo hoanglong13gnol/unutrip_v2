@@ -15,6 +15,7 @@ FastAPI retrieval + generation API. Layout:
 | `generation/` | Context + prompt builders |
 | `llm/` | Gemini client + response cache |
 | `core/` | Config, security, Redis, artifacts, text normalization |
+| `repositories/` | Runtime artifact fetch / volume materialize (Phase D) |
 | `domain/` | Domain Pydantic models |
 
 ## Local setup
@@ -60,7 +61,7 @@ python scripts/eval_rag_retrieval.py --golden eval/golden_queries_ci.json --ci \
 - `tests/fixtures/` — tracked mini corpus + `places_app` for CI builds
 - `tests/test_retrieval_fixture.py` — hit@5 on fixture index (Phase 5)
 - `retrieval/rerank.py` — dense TF-IDF rerank; optional cross-encoder via `requirements-rerank.txt`
-- `docs/ARTIFACT_POLICY.md`, `docs/RETRIEVAL.md`, `docs/PRODUCTION.md`
+- `docs/ARTIFACT_POLICY.md`, `docs/DEPLOY_CHECKLIST.md`, `docs/RETRIEVAL.md`, `docs/PRODUCTION.md`
 - CI: `.github/workflows/rag-ci.yml` (build fixture → pytest → verify → eval)
 
 ## Production (Phase 6)

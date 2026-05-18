@@ -8,14 +8,16 @@ ENV PYTHONPATH=/svc \
     PYTHONDONTWRITEBYTECODE=1
 
 COPY pyproject.toml README.md ./
-COPY app core domain generation llm pipelines providers retrieval services ./
+COPY app core domain generation llm pipelines providers repositories retrieval services ./
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir .
 
-COPY jobs scripts eval data ./ 
-RUN pip install --no-cache-dir --no-deps -e .
+COPY jobs scripts eval data ./
+RUN pip install --no-cache-dir --no-deps -e. \
+    && chmod +x scripts/docker_entrypoint.sh
 
 EXPOSE 8001
 
+ENTRYPOINT ["scripts/docker_entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
