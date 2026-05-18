@@ -19,6 +19,9 @@ local.properties
 *.pyo
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+dist/
+build/
 
 # Local backup trees (keep out of VCS)
 /backups/

@@ -1,0 +1,40 @@
+name: RAG service
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/rag/**"
+      - ".github/workflows/rag-ci.yml"
+  pull_request:
+    paths:
+      - "backend/rag/**"
+      - ".github/workflows/rag-ci.yml"
+
+jobs:
+  rag:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/rag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/rag/requirements.txt
+            backend/rag/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt && pip install --no-deps -e .
+      - name: Ruff lint
+        run: ruff check app core domain generation llm pipelines retrieval services tests scripts
+      - name: Import app
+        run: python -c "from app.main import app; print(app.title)"
+      - name: Unit & API tests
+        run: python -m pytest tests/ -q
+      - name: Verify artifacts
+        run: python scripts/verify_rag_artifacts.py --allow-missing
+      - name: Offline eval (retrieval smoke)
+        run: python scripts/eval_rag_retrieval.py --ci --min-province-accuracy 0.5
