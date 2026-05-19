@@ -1,7 +1,7 @@
 -- DEPRECATED for v2 — canonical schema: database/migrations/ (see database/README.md).
 -- Still used as optional Docker bootstrap (DATABASE_BOOTSTRAP_LEGACY=true) when DB is empty.
 --
--- SmartTravel Database Schema
+-- UNUtrip Database Schema
 -- Manual Import for XAMPP / phpMyAdmin
 
 SET NAMES utf8mb4;

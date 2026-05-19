@@ -1,1 +1,1 @@
-export { buildRouter } from "./routes/index.js";
+export { buildRouter } from "./api/router.js";

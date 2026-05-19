@@ -140,7 +140,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
                 android:gravity="center"
-                android:text="UNUTrip&#10;SmartTravel App v1.0.0&#10;Hoang Van Chau Long CNTT-K21D&#10;DATN-2026"
+                android:text="UNUTrip&#10;UNUtrip App v1.0.0&#10;Hoang Van Chau Long CNTT-K21D&#10;DATN-2026"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 

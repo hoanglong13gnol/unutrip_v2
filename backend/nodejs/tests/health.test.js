@@ -52,7 +52,7 @@ describe("HTTP health", () => {
   it("GET /api/health returns liveness", async () => {
     const res = await request(createApp()).get("/api/health").expect(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.service).toBe("smarttravel-backend");
+    expect(res.body.service).toBe("unutrip-backend");
   });
 
   it("GET /api/health/ready returns 200 when DB and RAG health succeed", async () => {

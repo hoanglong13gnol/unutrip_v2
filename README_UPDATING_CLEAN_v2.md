@@ -155,7 +155,8 @@ tests/test_pipeline_city_match.py
 
 - [ ] Golden production: `relevant_place_ids` trên full index (`eval/golden_queries.json`)
 - [ ] Cross-encoder prod (`pip install -e ".[rerank]"`, `RAG_ENABLE_CROSS_ENCODER`)
-- [ ] Vector index / embedding (nếu scale)
+- [x] Vector index / embedding — `07_build_embedding_index.py`, RRF với BM25+TF-IDF (`RAG_ENABLE_VECTOR`)
+- [ ] Golden eval với vector bật trên full index
 
 ### Kiến trúc & API (thấp–trung bình)
 

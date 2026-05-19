@@ -21,3 +21,20 @@ export function authMiddleware(req, res, next) {
   }
 }
 
+/** Attach req.user when JWT is valid; continue as guest when missing or invalid. */
+export function optionalAuthMiddleware(req, res, next) {
+  const header = req.header("Authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : null;
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    req.user = jwt.verify(token, getJwtSecret());
+  } catch {
+    req.user = null;
+  }
+  return next();
+}
+

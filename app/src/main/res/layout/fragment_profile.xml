@@ -47,7 +47,7 @@
                 android:id="@+id/tvName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Người dùng SmartTravel"
+                android:text="Người dùng UNUtrip"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold"
@@ -59,7 +59,7 @@
                 android:id="@+id/tvEmail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="traveler@smarttravel.local"
+                android:text="traveler@unutrip.local"
                 android:textColor="@color/white_70"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />

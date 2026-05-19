@@ -115,11 +115,14 @@ async function seedUsers() {
   const passwordHash = bcrypt.hashSync("123456", 10);
   
   // Demo user first
-  const demoExists = await db.get("SELECT id FROM users WHERE email = ?", ["demo@smarttravel.local"]);
+  const demoEmail = "demo@unutrip.local";
+  const demoExists =
+    (await db.get("SELECT id FROM users WHERE email = ?", [demoEmail])) ||
+    (await db.get("SELECT id FROM users WHERE email = ?", ["demo@smarttravel.local"]));
   if (!demoExists) {
     await db.query(
       "INSERT INTO users (full_name, email, password_hash, phone, avatar, preferences_json) VALUES (?, ?, ?, ?, ?, ?)",
-      ["Demo User", "demo@smarttravel.local", passwordHash, "0900000000", null, JSON.stringify(["beach","food","culture"])]
+      ["Demo User", demoEmail, passwordHash, "0900000000", null, JSON.stringify(["beach","food","culture"])]
     );
   }
 
@@ -127,7 +130,7 @@ async function seedUsers() {
   const needed = 50 - currentCount;
 
   for (let i = 0; i < needed; i++) {
-    const email = `user${currentCount + i + 1}@smarttravel.local`;
+    const email = `user${currentCount + i + 1}@unutrip.local`;
     
     // Check if user already exists
     const exists = await db.get("SELECT id FROM users WHERE email = ?", [email]);

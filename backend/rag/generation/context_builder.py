@@ -34,10 +34,10 @@ class ContextBuilder:
             f"province: {meta.get('province')}",
             f"area: {meta.get('area')}",
             f"category: {meta.get('category_main')} / {meta.get('category_sub')}",
-            f"budget: {meta.get('budget_level_norm')}",
-            f"walking: {meta.get('walking_level_norm')}",
-            f"kid_friendly: {meta.get('kid_friendly_norm')}",
-            f"elderly_friendly: {meta.get('elderly_friendly_norm')}",
+            f"budget: {self._fmt(meta.get('budget_level_norm'))}",
+            f"walking: {self._fmt(meta.get('walking_level_norm'))}",
+            f"kid_friendly: {self._fmt(meta.get('kid_friendly_norm'))}",
+            f"elderly_friendly: {self._fmt(meta.get('elderly_friendly_norm'))}",
             f"slot: {meta.get('slot_norm')}",
             f"quality: {meta.get('quality_score')}",
             f"use: {meta.get('recommended_use_norm')}",
@@ -49,6 +49,12 @@ class ContextBuilder:
         ]
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _fmt(value) -> str:
+        if value is None or value == "":
+            return "chưa có"
+        return str(value)
 
     def _shorten_text(self, text: str, max_chars: int = 450) -> str:
         text = str(text or "").strip()

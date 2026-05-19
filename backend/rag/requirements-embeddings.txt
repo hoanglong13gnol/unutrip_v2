@@ -1,0 +1,2 @@
+# Optional dense vector retrieval — install: pip install -e ".[embeddings]"
+-e ".[embeddings]"

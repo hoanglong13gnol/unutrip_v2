@@ -47,9 +47,25 @@ def verify_manifest(*, allow_missing: bool = False, require_portable_paths: bool
         print("ERROR: corpus_sha256 mismatch", c_sha, "!=", m.get("corpus_sha256"))
         return 1
 
+    if m.get("embedding_enabled"):
+        emb_rel = m.get("embedding_index_path")
+        if not isinstance(emb_rel, str) or not emb_rel.strip():
+            print("ERROR: embedding_enabled but embedding_index_path missing")
+            return 1
+        emb_path = resolve_artifact_path(emb_rel)
+        if not emb_path.exists():
+            print("ERROR: embedding index missing:", emb_path)
+            return 0 if allow_missing else 1
+        emb_sha = sha256_file(emb_path)
+        if emb_sha != m.get("embedding_sha256"):
+            print("ERROR: embedding_sha256 mismatch", emb_sha, "!=", m.get("embedding_sha256"))
+            return 1
+
     doc_count = m.get("document_count")
+    emb_note = " + embeddings" if m.get("embedding_enabled") else ""
     print(
         "OK manifest matches corpus + bm25 index"
+        + emb_note
         + (f" ({doc_count} docs)" if doc_count is not None else "")
     )
     return 0

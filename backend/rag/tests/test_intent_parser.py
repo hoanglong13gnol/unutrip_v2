@@ -39,3 +39,25 @@ def test_toi_muon_is_not_evening_slot() -> None:
     p = IntentParser()
     out = p.parse("toi muon di ha noi")
     assert out.time_slot != "evening" or out.time_slot is None
+
+
+def test_food_query_hanoi() -> None:
+    p = IntentParser()
+    out = p.parse("Ăn gì khi đến Hà Nội?")
+    assert out.province_norm == "ha_noi"
+    assert "food" in out.interests
+
+
+def test_thai_nguyen_province_and_itinerary() -> None:
+    p = IntentParser()
+    out = p.parse("lich trinh di thai nguyen 2 ngay 1 dem")
+    assert out.intent == "itinerary"
+    assert out.province_norm == "thai_nguyen"
+    assert out.days == 2
+
+
+def test_an_giang_not_food_interest() -> None:
+    p = IntentParser()
+    out = p.parse("goi y di an giang")
+    assert out.province_norm == "an_giang"
+    assert "food" not in out.interests

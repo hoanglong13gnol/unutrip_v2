@@ -11,7 +11,7 @@ from typing import Any, cast
 from core.config import settings
 
 MANIFEST_NAME = "rag_artifacts_manifest.json"
-_MANIFEST_PATH_KEYS = ("corpus_path", "bm25_index_path")
+_MANIFEST_PATH_KEYS = ("corpus_path", "bm25_index_path", "embedding_index_path")
 
 
 def manifest_path() -> Path:
@@ -43,6 +43,8 @@ def manifest_path_issues(m: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     for key in _MANIFEST_PATH_KEYS:
         val = m.get(key)
+        if key == "embedding_index_path" and val is None:
+            continue
         if not isinstance(val, str) or not val.strip():
             issues.append(f"{key} missing or empty")
             continue
@@ -117,5 +119,7 @@ def manifest_status_block() -> dict[str, Any]:
         "bm25_sha256": m.get("bm25_sha256"),
         "document_count": m.get("document_count"),
         "tfidf_enabled": m.get("tfidf_enabled"),
+        "embedding_enabled": m.get("embedding_enabled"),
+        "embedding_model": m.get("embedding_model"),
         "corpus_path": m.get("corpus_path"),
     }

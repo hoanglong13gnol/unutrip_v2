@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
-const DEFAULT_JWT_SECRET = "smarttravel_dev_secret_change_me";
+const DEFAULT_JWT_SECRET = "unutrip_dev_secret_change_me";
 const MIN_JWT_SECRET_LEN = 32;
 const MIN_RAG_KEY_LEN = 16;
 const WEAK_SECRET_FRAGMENTS = [
@@ -21,6 +21,7 @@ const WEAK_SECRET_FRAGMENTS = [
   "paste_your",
   "example",
   "smarttravel_dev_secret",
+  "unutrip_dev_secret",
 ];
 
 /** Base URL FastAPI RAG. Node admin gọi `/admin/*` qua URL này; nếu RAG bật `RAG_ADMIN_API_KEY`, đặt cùng giá trị trong `RAG_ADMIN_API_KEY` (Node) — gửi qua header `X-RAG-Internal-Key`. */

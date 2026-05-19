@@ -21,7 +21,7 @@ describe("assertSafeProductionConfig", () => {
 
   it("throws in production when JWT_SECRET is default", async () => {
     process.env.NODE_ENV = "production";
-    process.env.JWT_SECRET = "smarttravel_dev_secret_change_me";
+    process.env.JWT_SECRET = "unutrip_dev_secret_change_me";
     process.env.RAG_INTERNAL_API_KEY = "internal-key-32-chars-minimum!!";
     process.env.RAG_ADMIN_API_KEY = "admin-key-32-chars-minimum!!!!!";
     const { assertSafeProductionConfig } = await import("../src/config/env.js");

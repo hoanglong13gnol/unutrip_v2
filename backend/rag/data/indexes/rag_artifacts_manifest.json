@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "built_at_utc": "2026-05-18T18:42:12.916495+00:00",
+  "built_at_utc": "2026-05-18T19:39:25.096699+00:00",
   "api_version": "0.3.0",
   "corpus_path": "data/processed/places_rag_documents.jsonl",
-  "corpus_sha256": "5310136d47a07b48128ff12ca89960f9166e35e7b540fec9d959b8cb1efbdc1e",
+  "corpus_sha256": "4422c41834d9843f9845429512d986f187b67fe194159c8638de8a75e61fa55e",
   "bm25_index_path": "data/indexes/bm25_index.pkl",
-  "bm25_sha256": "74c33c8c57cf150525c255aad319fbd8e1cdec1486350feba2237f695a695598",
-  "document_count": 10,
+  "bm25_sha256": "c5a7a9219f06f323f9641b845c7cf8cf88ff77e07d0eaa849819a964cc7351b2",
+  "document_count": 5592,
   "tfidf_enabled": true,
-  "tfidf_min_df": 1
+  "tfidf_min_df": 2
 }

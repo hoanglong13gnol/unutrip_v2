@@ -45,17 +45,22 @@ class TemplateAnswerProvider:
             province = meta.get("province")
             walking = meta.get("walking_level_norm")
             budget = meta.get("budget_level_norm")
+            budget_label = budget if budget not in (None, "") else "chưa có"
+            walking_label = walking if walking not in (None, "") else "chưa có"
 
             lines.append(
-                f"{index}. {name} ({province}) - ngân sách: {budget}, mức đi bộ: {walking}."
+                f"{index}. {name} ({province}) - ngân sách: {budget_label}, mức đi bộ: {walking_label}."
             )
 
         lines.append("")
+        province_hint = ""
+        if results:
+            first_prov = (results[0].get("metadata") or {}).get("province")
+            if first_prov:
+                province_hint = f" tại {first_prov}"
         lines.append(
-            "Dựa trên kết quả truy xuất, các địa điểm trên phù hợp với nhu cầu của bạn. "
-            "Nếu muốn đi nhẹ nhàng và tiết kiệm, nên ưu tiên các điểm có ngân sách free và mức đi bộ easy. "
-            "Nếu muốn trải nghiệm phong phú hơn, bạn có thể kết hợp thêm các điểm đảo/vịnh "
-            "hoặc hoạt động tham quan gần khu vực."
+            f"Dựa trên dữ liệu UnuTrip{province_hint}, bạn có thể ưu tiên các điểm phù hợp sở thích "
+            "(ẩm thực, văn hóa, thiên nhiên…). Bấm Tạo lịch trình để chỉnh sửa trước khi lưu."
         )
 
         return "\n".join(lines)

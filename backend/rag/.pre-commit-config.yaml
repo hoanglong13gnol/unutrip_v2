@@ -21,3 +21,10 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+
+      - id: manifest-staged-diff
+        name: manifest — no timestamp-only commits
+        entry: python scripts/check_manifest_staged_diff.py
+        language: system
+        pass_filenames: false
+        files: ^data/indexes/rag_artifacts_manifest\.json$

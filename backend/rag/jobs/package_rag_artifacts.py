@@ -27,6 +27,7 @@ PATHS = (
     "processed/places_rag_documents.jsonl",
     "processed/places_app.json",
     "indexes/bm25_index.pkl",
+    "indexes/embedding_vectors.npz",
     "indexes/rag_artifacts_manifest.json",
 )
 
@@ -52,7 +53,7 @@ def main() -> None:
         for rel in PATHS:
             src = data_root / rel
             if not src.is_file():
-                if rel.endswith("places_app.json"):
+                if rel.endswith("places_app.json") or rel.endswith("embedding_vectors.npz"):
                     continue
                 raise FileNotFoundError(src)
             zf.write(src, arcname=f"data/{rel}")

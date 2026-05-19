@@ -3,7 +3,7 @@
 ## Stages
 
 1. **Intent** — `IntentParser` (province, interests, constraints).
-2. **Lexical recall** — BM25 (+ optional RRF with char TF-IDF when `RAG_ENABLE_RRF=true`).
+2. **Lexical + dense recall** — BM25 (+ optional RRF with char TF-IDF when `RAG_ENABLE_RRF=true`; + dense vectors when `RAG_ENABLE_VECTOR=true` and `embedding_vectors.npz` exists).
 3. **Travel rules** — province / budget / elderly / interest boosts in `HybridRetriever`.
 4. **Rerank** — second-stage rescore (`RAG_ENABLE_RERANK=true`, default):
    - **dense_tfidf** — cosine on in-index TF-IDF vectors (default, no extra packages).
@@ -13,7 +13,10 @@
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `RAG_ENABLE_RRF` | `true` | Fuse BM25 + TF-IDF with RRF |
+| `RAG_ENABLE_RRF` | `true` | Fuse BM25 + TF-IDF (+ vector when enabled) with RRF |
+| `RAG_ENABLE_VECTOR` | `false` | Include sentence-transformer dense recall in RRF |
+| `RAG_EMBEDDING_MODEL` | `paraphrase-multilingual-MiniLM-L12-v2` | HF model for index + query encoding |
+| `RAG_VECTOR_TOP_K` | `120` | Candidate pool per channel before fusion |
 | `RAG_ENABLE_RERANK` | `true` | Second-stage rerank |
 | `RAG_ENABLE_CROSS_ENCODER` | `false` | Use cross-encoder instead of dense TF-IDF |
 | `RAG_CROSS_ENCODER_MODEL` | `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | HF model id |
@@ -23,6 +26,14 @@ Optional install:
 
 ```bash
 pip install -r requirements-rerank.txt
+pip install -r requirements-embeddings.txt
+```
+
+Build vector index (after BM25):
+
+```bash
+python jobs/build_rag_artifacts.py --from-fixture --with-embeddings
+# or: RAG_BUILD_EMBEDDINGS=true python jobs/build_rag_artifacts.py --from-db
 ```
 
 ## Evaluation

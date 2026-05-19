@@ -1,5 +1,5 @@
 import { authMiddleware } from "../../auth.js";
-import { upload } from "../../routes/upload.js";
+import { upload } from "../../shared/http/upload.js";
 import {
   getProfile,
   getStats,

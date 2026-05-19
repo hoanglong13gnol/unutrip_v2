@@ -1,5 +1,5 @@
 # Models (Gson / Retrofit)
--keep class com.smarttravel.data.model.** { *; }
+-keep class com.unutrip.data.model.** { *; }
 -keepattributes Signature
 -keepattributes *Annotation*
 -keepattributes EnclosingMethod

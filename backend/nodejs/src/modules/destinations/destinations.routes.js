@@ -1,4 +1,4 @@
-import { authMiddleware } from "../../auth.js";
+import { optionalAuthMiddleware } from "../../auth.js";
 import {
   listDestinations,
   listFeatured,
@@ -7,8 +7,8 @@ import {
 } from "./destinations.controller.js";
 
 export function registerDestinationRoutes(router) {
-  router.get("/destinations", authMiddleware, listDestinations);
-  router.get("/destinations/featured", authMiddleware, listFeatured);
-  router.get("/destinations/nearby", authMiddleware, listNearby);
-  router.get("/destinations/:id", authMiddleware, getDestinationDetail);
+  router.get("/destinations", optionalAuthMiddleware, listDestinations);
+  router.get("/destinations/featured", optionalAuthMiddleware, listFeatured);
+  router.get("/destinations/nearby", optionalAuthMiddleware, listNearby);
+  router.get("/destinations/:id", optionalAuthMiddleware, getDestinationDetail);
 }

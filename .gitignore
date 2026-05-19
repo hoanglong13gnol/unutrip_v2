@@ -35,6 +35,11 @@ build/
 # Local backup trees (keep out of VCS)
 /backups/
 
+# Root / local SQL dumps (use database/dumps/ — see database/dumps/README.md)
+/*.sql
+/database/dumps/*.sql
+!/database/dumps/README.md
+
 .env
 
 !.env.example
@@ -53,6 +58,7 @@ backend/rag/data/image_pipeline/reports/
 
 # RAG large artifacts — track manifest only; rebuild: jobs/build_rag_artifacts.py
 backend/rag/data/indexes/bm25_index.pkl
+backend/rag/data/indexes/embedding_vectors.npz
 backend/rag/data/processed/places_rag_documents.jsonl
 backend/rag/data/processed/places_master.parquet
 backend/rag/data/processed/places_app.json

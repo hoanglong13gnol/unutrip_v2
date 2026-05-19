@@ -41,6 +41,9 @@ PROVINCE_ALIASES = {
 
     "cao bang": "cao_bang",
 
+    "thai nguyen": "thai_nguyen",
+    "thai nguyen province": "thai_nguyen",
+
     "ha giang": "ha_giang",
     "hagiang": "ha_giang",
 
@@ -68,7 +71,10 @@ INTEREST_KEYWORDS = {
         "van hoa", "lich su", "bao tang", "di tich", "pho co", "kien truc"
     ],
     "food": [
-        "an uong", "am thuc", "mon ngon", "nha hang", "quan an", "cafe", "ca phe"
+        "an uong", "am thuc", "mon ngon", "nha hang", "quan an", "cafe", "ca phe",
+        "an gi khi", "an gi o", "an gi tai", "an gi den", "an gi thi",
+        "dac san", "mon gi", "goi y mon", "nen an", "thu gi", "do an",
+        "quan com", "bun cha", "pho ", "banh cuon", "street food",
     ],
     "shopping": [
         "mua sam", "cho noi", "cho dem", "cho dia phuong",
@@ -219,6 +225,10 @@ class IntentParser:
         return re.search(rf"\b{re.escape(phrase)}\b", q) is not None
 
     def _detect_interests(self, q: str, intent: ParsedIntent) -> None:
+        if intent.province_norm != "an_giang" and re.search(r"\ban gi\b", q):
+            if "food" not in intent.interests:
+                intent.interests.append("food")
+
         for interest, keywords in INTEREST_KEYWORDS.items():
             matched = False
 
@@ -239,3 +249,15 @@ class IntentParser:
             intent.preferred_doc_types = ["itinerary", "constraint", "place"]
         else:
             intent.preferred_doc_types = ["place", "constraint", "itinerary"]
+
+
+def resolve_province_norm(name: str | None) -> str | None:
+    """Map display province (e.g. from Android targetProvince) to corpus province_norm."""
+    if not name:
+        return None
+    q = normalize_text(name)
+    for alias in sorted(PROVINCE_ALIASES.keys(), key=len, reverse=True):
+        if alias in q or q in alias:
+            return PROVINCE_ALIASES[alias]
+    compact = q.replace(" ", "_")
+    return compact or None

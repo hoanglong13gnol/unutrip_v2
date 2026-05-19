@@ -1,4 +1,4 @@
-import { authMiddleware } from "../../auth.js";
+import { authMiddleware, optionalAuthMiddleware } from "../../auth.js";
 import {
   suggestItinerary,
   ragChat,
@@ -16,8 +16,8 @@ import {
  */
 export function registerAiRoutes(router) {
   router.post("/ai/suggest-itinerary", authMiddleware, suggestItinerary);
-  router.post("/ai/rag-chat", authMiddleware, ragChat);
-  router.post("/ai/chat", authMiddleware, chat);
+  router.post("/ai/rag-chat", optionalAuthMiddleware, ragChat);
+  router.post("/ai/chat", optionalAuthMiddleware, chat);
   router.post("/ai/itinerary-preview", authMiddleware, itineraryPreview);
   router.post("/ai/itinerary-options", authMiddleware, itineraryOptions);
   router.post("/itineraries/create-from-option", authMiddleware, createFromOption);

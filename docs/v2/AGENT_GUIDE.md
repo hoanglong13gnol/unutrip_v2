@@ -117,7 +117,7 @@ backend/rag/
 | # | Task | Gợi ý |
 |---|------|--------|
 | 1 | ~~Build corpus production~~ | ✅ 5592 docs từ `unudata_v2_test` — `publish_rag_bundle.ps1` hoặc `build_rag_artifacts.py --from-db` |
-| 2 | ~~Upload bundle~~ | ✅ Zip `backend/rag/dist/unutrip-rag-artifacts-prod.zip` (~16MB) + `.sha256` + `.RELEASE.json`; stage `deploy/staging-rag-data/`; S3: `$env:RAG_ARTIFACT_S3_URI` |
+| 2 | ~~Upload bundle~~ | ✅ [Release `rag-artifacts-2026-05-19`](https://github.com/hoanglong13gnol/unutrip_v2/releases/tag/rag-artifacts-2026-05-19) — set `RAG_ARTIFACT_BUNDLE_URL` |
 | 3 | ~~Staging E2E (local)~~ | ✅ `unudata_v2_test` + build `--from-db` + `smoke_staging_e2e.ps1` (Docker: compose + `.sh`) |
 | 4 | Branch protection | GitHub: bắt buộc `RAG service` + `Backend CI` trên `main` |
 
@@ -230,6 +230,9 @@ python scripts/verify_rag_artifacts.py --strict
 | Place id không map | Kiểm tra `place_id_map`, `USE_V2_PLACE_TABLES`, legacy fallback |
 | sklearn version | Phải `scikit-learn==1.7.1` (pickle index) |
 | Commit secrets | Chỉ `.env.example` — không `.env` |
+| SQL dump ở root | Dùng `database/dumps/` (`/*.sql` gitignored) — xem `docs/v2/NAMING.md` |
+| Manifest chỉ đổi timestamp | Pre-commit `manifest-staged-diff`; commit khi hash/count đổi |
+| Node `src/routes/*.routes.js` shim | Đã gỡ — API registry: `src/api/router.js` |
 
 ---
 
@@ -251,6 +254,8 @@ python scripts/verify_rag_artifacts.py --strict
 | File | Nội dung |
 |------|----------|
 | `README.md` | Tổng quan monorepo |
+| **`docs/v2/README_TOTAL_GUIDE.md`** | **Playbook khắc phục điểm yếu (P0–P3)** |
+| `docs/v2/NAMING.md` | Product vs package vs DB names |
 | `README_UPDATING_CLEAN_v2.md` | Roadmap chi tiết Phase A–E, P0–P3 |
 | `README_UPDATING_CLEAN.md` | Lịch sử Phase 0–7 |
 | `docs/v2/RAG_ARCHITECTURE.md` | Kiến trúc mục tiêu |
@@ -258,6 +263,7 @@ python scripts/verify_rag_artifacts.py --strict
 | `docs/v2/PHASE7_NODE_ANDROID_PARITY.md` | Place tables, flags |
 | `backend/rag/README.md` | Setup RAG |
 | `backend/rag/docs/ARTIFACT_POLICY.md` | Manifest / rebuild |
+| `backend/rag/docs/RETRIEVAL.md` | BM25 + TF-IDF + vector RRF |
 | `backend/rag/docs/DEPLOY_CHECKLIST.md` | Prod deploy |
 | `database/README.md` | Migrations |
 | `deploy/prometheus/README.md` | Alerting |

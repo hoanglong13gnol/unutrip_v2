@@ -3,6 +3,8 @@
 **Source of truth:** `database/migrations/` (numbered SQL).  
 **Deprecated:** `backend/nodejs/database.sql` — legacy XAMPP monolith; only used as optional bootstrap for empty Docker DBs.
 
+**Local dumps:** large `.sql` files belong in `database/dumps/` (gitignored), not the repo root — see `database/dumps/README.md`.
+
 ## Docker Compose (recommended)
 
 ```bash

@@ -37,6 +37,9 @@ dev = [
 rerank = [
     "sentence-transformers>=3.0.0,<4",
 ]
+embeddings = [
+    "sentence-transformers>=3.0.0,<4",
+]
 
 [build-system]
 requires = ["setuptools>=61"]

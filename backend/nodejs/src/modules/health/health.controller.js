@@ -5,7 +5,7 @@ import { HEALTHCHECK_SKIP_RAG } from "../../config/env.js";
 export function getHealth(req, res) {
   res.json({
     ok: true,
-    service: "smarttravel-backend",
+    service: "unutrip-backend",
     uptime_s: Math.round(process.uptime()),
   });
 }

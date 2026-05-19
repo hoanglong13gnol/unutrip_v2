@@ -12,7 +12,7 @@ export async function listDestinations(req, res) {
   const search = (req.query.search ?? "").toString().trim() || null;
 
   const { total, data } = await destinationsService.listDestinationsPage({
-    userId: req.user.userId,
+    userId: req.user?.userId ?? null,
     category,
     province,
     search,
@@ -24,7 +24,7 @@ export async function listDestinations(req, res) {
 
 export async function listFeatured(req, res) {
   const data = await destinationsService.listFeaturedDestinationsForUser({
-    userId: req.user.userId,
+    userId: req.user?.userId ?? null,
     limit: 5
   });
   return res.json({ success: true, data, total: data.length, page: 1, limit: data.length });
@@ -46,7 +46,7 @@ export async function listNearby(req, res) {
     }
 
     const data = await destinationsService.listNearbyDestinationsForUser({
-      userId: req.user.userId,
+      userId: req.user?.userId ?? null,
       lat,
       lng,
       radiusKm,
@@ -74,7 +74,10 @@ export async function listNearby(req, res) {
 
 export async function getDestinationDetail(req, res) {
   const id = Number(req.params.id);
-  const result = await destinationsService.getDestinationDetail({ userId: req.user.userId, id });
+  const result = await destinationsService.getDestinationDetail({
+    userId: req.user?.userId ?? null,
+    id
+  });
 
   if (!result.ok) return res.status(404).json({ success: false, message: "Not found", data: null });
   return res.json({

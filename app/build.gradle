@@ -18,11 +18,11 @@ if (!apiBaseUrl.endsWith("/")) {
 }
 
 android {
-    namespace 'com.smarttravel'
+    namespace 'com.unutrip'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.smarttravel"
+        applicationId "com.unutrip"
         minSdk 26
         targetSdk 34
         versionCode 1
@@ -127,8 +127,7 @@ dependencies {
     implementation 'androidx.room:room-ktx:2.6.1'
     kapt 'androidx.room:room-compiler:2.6.1'
 
-    // Gemini AI — free tier 60 req/min
-    implementation 'com.google.ai.client.generativeai:generativeai:0.2.2'
+    // AI: Android calls Node (/api/ai/*), not Gemini SDK on-device
 
     // CircleImageView
     implementation 'de.hdodenhof:circleimageview:3.1.0'

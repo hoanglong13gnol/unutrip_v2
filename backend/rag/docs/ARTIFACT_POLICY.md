@@ -6,6 +6,7 @@
 |------|---------|--------|
 | `data/indexes/rag_artifacts_manifest.json` | Yes | Checksums + document count for last production build |
 | `data/indexes/bm25_index.pkl` | No | Large binary; rebuild locally or in CI |
+| `data/indexes/embedding_vectors.npz` | No | Dense vectors; `07_build_embedding_index.py` or `--with-embeddings` |
 | `data/processed/places_rag_documents.jsonl` | No | Full corpus; export from DB |
 | `data/processed/places_app.json` | No | Export from `app_places` |
 | `tests/fixtures/rag_corpus_sample.jsonl` | Yes | Small reproducible corpus for CI |
@@ -25,6 +26,7 @@ Steps:
 1. `export_rag_knowledge_base_to_corpus.py` → `places_rag_documents.jsonl`
 2. `export_app_places_to_json.py` → `places_app.json` (optional but recommended)
 3. `06_build_bm25_index.py` → `bm25_index.pkl` + updates manifest checksums
+4. (Optional) `07_build_embedding_index.py` → `embedding_vectors.npz` + `embedding_sha256` in manifest
 
 Do **not** commit `.pkl` or full JSONL. Update the manifest only when you intentionally refresh production checksums after a local build.
 

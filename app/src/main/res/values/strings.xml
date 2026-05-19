@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">UNU Trip</string>
+    <string name="app_name">UNUtrip</string>
     <string name="app_tagline">Du lịch dễ thương cùng Trợ lý Mèo</string>
 
     <!-- Auth -->

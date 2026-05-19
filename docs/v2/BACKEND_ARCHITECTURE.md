@@ -7,7 +7,7 @@ Define the target Node backend architecture for UNUtrip v2 while preserving Andr
 ## Current context
 
 - v2 DB migrations are validated on `unudata_v2_test`.
-- Backend runtime still reads legacy tables (`destinations`, `destination_images`, `rag_places`) in multiple routes/helpers.
+- Backend runtime still reads legacy tables (`destinations`, `destination_images`, `rag_places`) in some repositories/controllers (migrate to v2 `app_places`).
 - Android clients already depend on current API response shapes and endpoint behavior.
 
 ## Target architecture style

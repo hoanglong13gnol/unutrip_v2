@@ -7,7 +7,7 @@
     <!-- Home -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.smarttravel.ui.home.HomeFragment"
+        android:name="com.unutrip.ui.home.HomeFragment"
         android:label="Trang chủ">
 
         <action
@@ -30,7 +30,7 @@
     <!-- Home Specific Sub-screens -->
     <fragment
         android:id="@+id/homeDestinationListFragment"
-        android:name="com.smarttravel.ui.destination.DestinationListFragment"
+        android:name="com.unutrip.ui.destination.DestinationListFragment"
         android:label="Khám phá">
         <argument
             android:name="category"
@@ -48,7 +48,7 @@
     <!-- Destination List -->
     <fragment
         android:id="@+id/destinationListFragment"
-        android:name="com.smarttravel.ui.destination.DestinationListFragment"
+        android:name="com.unutrip.ui.destination.DestinationListFragment"
         android:label="Khám phá">
 
         <argument
@@ -73,7 +73,7 @@
     <!-- Destination Detail -->
     <fragment
         android:id="@+id/destinationDetailFragment"
-        android:name="com.smarttravel.ui.destination.DestinationDetailFragment"
+        android:name="com.unutrip.ui.destination.DestinationDetailFragment"
         android:label="Chi tiết">
 
         <argument
@@ -92,7 +92,7 @@
     <!-- Map -->
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.smarttravel.ui.destination.MapFragment"
+        android:name="com.unutrip.ui.destination.MapFragment"
         android:label="Bản đồ">
 
         <argument
@@ -109,7 +109,7 @@
     <!-- Itinerary List -->
     <fragment
         android:id="@+id/itineraryFragment"
-        android:name="com.smarttravel.ui.itinerary.ItineraryFragment"
+        android:name="com.unutrip.ui.itinerary.ItineraryFragment"
         android:label="Lịch trình">
         <action
             android:id="@+id/action_itineraryFragment_to_aiItineraryRequestFragment"
@@ -138,7 +138,7 @@
     <!-- Itinerary Detail -->
     <fragment
         android:id="@+id/itineraryDetailFragment"
-        android:name="com.smarttravel.ui.itinerary.ItineraryDetailFragment"
+        android:name="com.unutrip.ui.itinerary.ItineraryDetailFragment"
         android:label="Chi tiết lịch trình">
 
         <argument
@@ -155,7 +155,7 @@
     </fragment>
     <fragment
         android:id="@+id/aiItineraryRequestFragment"
-        android:name="com.smarttravel.ui.itinerary.AIItineraryRequestFragment"
+        android:name="com.unutrip.ui.itinerary.AIItineraryRequestFragment"
         android:label="AI gợi ý tour">
 
         <action
@@ -169,7 +169,7 @@
     </fragment>
     <fragment
         android:id="@+id/aiItineraryOptionsFragment"
-        android:name="com.smarttravel.ui.itinerary.AIItineraryOptionsFragment"
+        android:name="com.unutrip.ui.itinerary.AIItineraryOptionsFragment"
         android:label="Chọn tour AI">
 
         <action
@@ -183,24 +183,24 @@
     </fragment>
     <fragment
         android:id="@+id/aiItineraryEditorFragment"
-        android:name="com.smarttravel.ui.itinerary.AIItineraryEditorFragment"
+        android:name="com.unutrip.ui.itinerary.AIItineraryEditorFragment"
         android:label="Chỉnh tour AI" />
     <!-- AI Suggest -->
     <fragment
         android:id="@+id/aiSuggestFragment"
-        android:name="com.smarttravel.ui.itinerary.AISuggestFragment"
+        android:name="com.unutrip.ui.itinerary.AISuggestFragment"
         android:label="AI Gợi ý" />
 
     <!-- Chatbot -->
     <fragment
         android:id="@+id/chatbotFragment"
-        android:name="com.smarttravel.ui.chatbot.ChatbotFragment"
+        android:name="com.unutrip.ui.chatbot.ChatbotFragment"
         android:label="Trợ lý AI" />
 
     <!-- Profile -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.smarttravel.ui.profile.ProfileFragment"
+        android:name="com.unutrip.ui.profile.ProfileFragment"
         android:label="Hồ sơ">
         <action
             android:id="@+id/action_profileFragment_to_settingsFragment"
@@ -228,7 +228,7 @@
     <!-- Profile Specific Sub-screens -->
     <fragment
         android:id="@+id/profileFavoriteListFragment"
-        android:name="com.smarttravel.ui.destination.DestinationListFragment"
+        android:name="com.unutrip.ui.destination.DestinationListFragment"
         android:label="Yêu thích">
         <argument
             android:name="isFavoriteOnly"
@@ -245,7 +245,7 @@
 
     <fragment
         android:id="@+id/profileItineraryListFragment"
-        android:name="com.smarttravel.ui.itinerary.ItineraryFragment"
+        android:name="com.unutrip.ui.itinerary.ItineraryFragment"
         android:label="Lịch trình của tôi">
         <action
             android:id="@+id/action_profileItineraryListFragment_to_itineraryDetailFragment"
@@ -259,7 +259,7 @@
     <!-- Settings -->
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.smarttravel.ui.profile.SettingsFragment"
+        android:name="com.unutrip.ui.profile.SettingsFragment"
         android:label="Cài đặt" />
 
 </navigation>

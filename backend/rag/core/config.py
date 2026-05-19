@@ -47,6 +47,17 @@ def env_int(name: str, default: int) -> int:
         return default
 
 
+def env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
 def optional_stripped_url(name: str) -> str | None:
     value = os.getenv(name)
     if value is None:
@@ -94,6 +105,13 @@ class Settings(BaseModel):
     # Retrieval / ops
     enable_rrf_fusion: bool = env_bool("RAG_ENABLE_RRF", True)
     enable_rerank: bool = env_bool("RAG_ENABLE_RERANK", True)
+    enable_vector_retrieval: bool = env_bool("RAG_ENABLE_VECTOR", False)
+    embedding_model: str = env_str(
+        "RAG_EMBEDDING_MODEL",
+        "paraphrase-multilingual-MiniLM-L12-v2",
+    )
+    vector_candidate_top_k: int = env_int("RAG_VECTOR_TOP_K", 120)
+    rrf_k: float = env_float("RAG_RRF_K", 60.0)
     enable_cross_encoder: bool = env_bool("RAG_ENABLE_CROSS_ENCODER", False)
     cross_encoder_model: str = env_str(
         "RAG_CROSS_ENCODER_MODEL",
@@ -128,6 +146,15 @@ def _artifact_source_dir_from_env() -> Path | None:
 
 
 settings = Settings(artifact_source_dir=_artifact_source_dir_from_env())
+
+
+def vector_retrieval_active() -> bool:
+    """True when dense vector recall is enabled and the embedding artifact exists."""
+    if not settings.enable_vector_retrieval:
+        return False
+    from retrieval.vector_retriever import VectorRetriever
+
+    return VectorRetriever.index_exists()
 
 
 def get_log_level() -> str:

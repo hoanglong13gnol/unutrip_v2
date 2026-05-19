@@ -2,7 +2,9 @@
 
 Bản thư mục này chỉ giữ **mã nguồn và cấu hình vận hành** được tách từ demo v1: Android (`app/`), API Node (`backend/nodejs/`), dịch vụ RAG (`backend/rag/`), migration MySQL (`database/migrations/`), Docker Compose ở root.
 
-**Agent / dev mới:** đọc [`docs/v2/AGENT_GUIDE.md`](docs/v2/AGENT_GUIDE.md) (đã làm / cần làm / lệnh / pitfalls).
+**Agent / dev mới:** đọc [`docs/v2/AGENT_GUIDE.md`](docs/v2/AGENT_GUIDE.md) (đã làm / cần làm / lệnh / pitfalls).  
+**Khắc phục điểm yếu / roadmap đầy đủ:** [`docs/v2/README_TOTAL_GUIDE.md`](docs/v2/README_TOTAL_GUIDE.md).  
+**Đặt tên / DB dump:** [`docs/v2/NAMING.md`](docs/v2/NAMING.md) · SQL lớn → `database/dumps/` (gitignored).
 
 ## Đã cố ý loại bỏ
 

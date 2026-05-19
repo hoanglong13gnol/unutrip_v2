@@ -37,6 +37,16 @@ def main() -> None:
         help="With --from-db, also export app_places to places_app.json",
     )
     ap.add_argument("--skip-export", action="store_true", help="Skip corpus export (use existing JSONL)")
+    ap.add_argument(
+        "--with-embeddings",
+        action="store_true",
+        help="Build dense embedding index (requires pip install -e \".[embeddings]\")",
+    )
+    ap.add_argument(
+        "--skip-embeddings",
+        action="store_true",
+        help="Skip embedding build even if RAG_BUILD_EMBEDDINGS=true",
+    )
     args = ap.parse_args()
 
     if args.from_db and args.from_fixture:
@@ -53,6 +63,18 @@ def main() -> None:
             run([py, str(ROOT / "scripts" / "export_app_places_to_json.py")])
 
     run([py, str(ROOT / "scripts" / "06_build_bm25_index.py")])
+
+    build_embeddings = args.with_embeddings
+    if not args.skip_embeddings:
+        import os
+
+        build_embeddings = build_embeddings or os.getenv("RAG_BUILD_EMBEDDINGS", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+    if build_embeddings and not args.skip_embeddings:
+        run([py, str(ROOT / "scripts" / "07_build_embedding_index.py")])
 
 
 if __name__ == "__main__":

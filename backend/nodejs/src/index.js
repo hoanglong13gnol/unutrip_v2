@@ -20,11 +20,24 @@ async function main() {
     const publicImagesDir = path.join(__dirname, "..", "public", "images");
 
     const server = app.listen(PORT, HOST, () => {
-      console.log(`SmartTravel backend running on http://${HOST}:${PORT}`);
+      console.log(`UNUtrip backend running on http://${HOST}:${PORT}`);
       console.log(`Admin Dashboard: http://${HOST}:${PORT}/admin/dashboard`);
       if (fs.existsSync(publicImagesDir)) {
         console.log(`Serving destination images from: ${publicImagesDir}`);
       }
+    });
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `[startup] Port ${PORT} is already in use. Another backend instance may be running.\n` +
+            `  • Stop it: netstat -ano | findstr :${PORT}  then  taskkill /PID <pid> /F\n` +
+            `  • Or use a different port: set BACKEND_PORT=3001  (or PORT in .env)`
+        );
+        process.exit(1);
+      }
+      console.error("[startup] HTTP server error:", err);
+      process.exit(1);
     });
 
     const shutdown = (signal) => {

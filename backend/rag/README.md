@@ -12,7 +12,7 @@ Layout:
 | `pipelines/` | Orchestration (`RagPipeline`), `response_builder`, `request_logger` |
 | `pipelines/policies/` | `LocationFilter`, `GenerationRouter` |
 | `providers/` | Gemini + template answer adapters (`llm/` remains implementation) |
-| `retrieval/` | BM25, hybrid retrieval, intent, place store |
+| `retrieval/` | BM25, TF-IDF, optional dense vectors (RRF), intent, place store |
 | `retrieval/scoring/` | Travel-rule scoring, result dedup |
 | `generation/` | Context + prompt builders |
 | `llm/` | Gemini client + response cache |

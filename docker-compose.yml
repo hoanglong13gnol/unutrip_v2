@@ -11,7 +11,7 @@
 # MySQL:       localhost:3306 (see MYSQL_* variables)
 #
 # DB: service `db-migrate` applies database/migrations/ once (see database/README.md).
-# Set DATABASE_BOOTSTRAP_LEGACY=false if you already imported your own dump.
+# Set DATABASE_BOOTSTRAP_LEGACY=false if DB already has `users` (e.g. after database/dumps/*.sql import).
 
 services:
   mysql:

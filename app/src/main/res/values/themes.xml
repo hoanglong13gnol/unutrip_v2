@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.SmartTravel" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.UNUtrip" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/text_on_primary</item>
         <item name="colorSecondary">@color/accent</item>
@@ -23,7 +23,7 @@
         <item name="android:windowAllowReturnTransitionOverlap">true</item>
     </style>
 
-    <style name="Theme.SmartTravel.NoActionBar" parent="Theme.SmartTravel">
+    <style name="Theme.UNUtrip.NoActionBar" parent="Theme.UNUtrip">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -124,7 +124,7 @@
         <item name="android:fontFamily">sans-serif-rounded</item>
     </style>
 
-    <style name="BottomSheetSmartTravel" parent="ThemeOverlay.Material3.BottomSheetDialog">
+    <style name="BottomSheetUNUtrip" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 

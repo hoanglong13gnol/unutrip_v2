@@ -11,6 +11,7 @@ from pipelines.policies.location_filter import LocationFilter
 from pipelines.request_logger import log_rag_request
 from pipelines.response_builder import extract_places, extract_warnings
 from retrieval.hybrid_retriever import HybridRetriever
+from retrieval.intent_parser import resolve_province_norm
 from retrieval.logger import AiRequestLogger
 from retrieval.place_store import PlaceStore
 
@@ -47,7 +48,12 @@ class RagPipeline:
             top_k_effective = min(12, max(top_k, min(10, days * 3)))
 
         t0 = time.perf_counter()
-        retrieved = self.retriever.retrieve(query, top_k=top_k_effective)
+        province_override = resolve_province_norm(target_province) if target_province else None
+        retrieved = self.retriever.retrieve(
+            query,
+            top_k=top_k_effective,
+            province_norm_override=province_override,
+        )
         retrieved = self.location_filter.apply(
             retrieved,
             query=query,
