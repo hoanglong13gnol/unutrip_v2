@@ -7,7 +7,7 @@
 
 import { db } from "../db.js";
 import { fillAdminTemplate, loadAdminTemplate } from "./_shared/adminTemplate.js";
-import { renderLayout } from "./_shared/layout.js";
+import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 
 export function registerSystemAdminRoutes(router) {
   // 4. Hệ thống
@@ -17,6 +17,6 @@ export function registerSystemAdminRoutes(router) {
     const content = fillAdminTemplate(loadAdminTemplate("system.content.html"), {
       ITINERARY_COUNT: stats.c
     });
-    res.send(renderLayout(content, "system", "Hệ thống", cspNonce));
+    res.send(renderLayout(content, "system", "Hệ thống", cspNonce, layoutFromRequest(req)));
   });
 }

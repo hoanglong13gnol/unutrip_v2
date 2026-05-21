@@ -12,7 +12,7 @@
 import { RAG_ADMIN_DEBUG_TIMEOUT_MS, RAG_BASE_URL } from "../config/env.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml, renderJsonBox } from "./_shared/escape.js";
-import { renderLayout } from "./_shared/layout.js";
+import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 import { fetchRagJson, postRagJson } from "./_shared/ragHttp.js";
 
 export function registerRagAiAdminRoutes(router) {
@@ -187,7 +187,7 @@ const modelUsage = aiMetrics.model_usage ?? {};
         SCRIPT_NONCE_ATTR: scriptNonceAttr(cspNonce)
       });
 
-      res.send(renderLayout(content, "rag-ai", "RAG AI", cspNonce));
+      res.send(renderLayout(content, "rag-ai", "RAG AI", cspNonce, layoutFromRequest(req)));
     } catch (error) {
       res.status(500).send("RAG AI Dashboard Error: " + error.message);
     }

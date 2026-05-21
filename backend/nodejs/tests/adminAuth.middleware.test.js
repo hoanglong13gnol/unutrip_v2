@@ -90,7 +90,41 @@ describe("adminAuth middleware", () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("gated mode, no Authorization header → 401 Unauthorized with WWW-Authenticate", async () => {
+  it("gated mode, no Authorization header → redirects HTML clients to /admin/login", async () => {
+    process.env.ADMIN_BASIC_USER = "admin";
+    process.env.ADMIN_BASIC_PASS = "secret";
+    const mw = await loadMiddleware();
+    const app = buildApp(mw);
+
+    const res = await request(app)
+      .get("/admin/probe")
+      .set("Accept", "text/html")
+      .expect(302);
+
+    expect(res.headers.location).toMatch(/^\/admin\/login\?next=/);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("gated mode, no Authorization header → 401 JSON for API-style POST", async () => {
+    process.env.ADMIN_BASIC_USER = "admin";
+    process.env.ADMIN_BASIC_PASS = "secret";
+    const mw = await loadMiddleware();
+    const app = express();
+    app.post("/admin/probe", mw, (req, res) => {
+      res.json({ ok: true });
+    });
+
+    const res = await request(app)
+      .post("/admin/probe")
+      .set("Accept", "application/json")
+      .send({})
+      .expect(401);
+
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Unauthorized");
+  });
+
+  it("gated mode, no Authorization header → 401 Unauthorized with WWW-Authenticate for plain requests", async () => {
     process.env.ADMIN_BASIC_USER = "admin";
     process.env.ADMIN_BASIC_PASS = "secret";
     const mw = await loadMiddleware();

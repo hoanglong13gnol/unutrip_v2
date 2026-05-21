@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnuTrip | Đăng nhập Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 overflow-hidden">
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col shadow-2xl z-20">
+            <div class="p-8">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-paper-plane text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">UnuTrip</span>
+                </div>
+            </div>
+
+            <div class="flex-1 px-4 py-2">
+                <p class="px-4 text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Quản trị</p>
+                <div class="rounded-xl bg-white/5 border border-white/10 p-4 text-sm text-gray-400 leading-relaxed">
+                    Đăng nhập để truy cập bảng điều khiển quản trị hệ thống UnuTrip.
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-950 border-t border-white/5 mt-auto">
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Đăng nhập Admin</p>
+                ««ERROR_BLOCK»»
+                <form method="post" action="/admin/auth/login" class="space-y-3 animate-fadeIn">
+                    <input type="hidden" name="next" value="««NEXT_PATH»»">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tên đăng nhập</label>
+                        <input type="text" name="username" required autocomplete="username"
+                            class="mt-1 w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                            placeholder="admin">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Mật khẩu</label>
+                        <input type="password" name="password" required autocomplete="current-password"
+                            class="mt-1 w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                            placeholder="••••••••">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wide py-3 rounded-xl transition shadow-lg shadow-blue-500/20">
+                        <i class="fas fa-right-to-bracket mr-2"></i> Đăng nhập
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <header class="bg-white border-b border-gray-200 h-20 flex items-center px-8 flex-shrink-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Đăng nhập quản trị</h2>
+                    <p class="text-sm text-gray-500 font-medium">UnuTrip Admin Dashboard</p>
+                </div>
+            </header>
+            <main class="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+                <div class="max-w-lg text-center animate-fadeIn">
+                    <div class="w-20 h-20 rounded-3xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-200">
+                        <i class="fas fa-shield-halved text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">Chào mừng trở lại</h3>
+                    <p class="text-gray-500 leading-relaxed">
+                        Sử dụng form đăng nhập ở góc trái dưới để truy cập các chức năng quản trị:
+                        người dùng, địa điểm, đánh giá và hệ thống RAG AI.
+                    </p>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -48,6 +48,9 @@ describe("buildAdminRouter() registration shape", () => {
     const expected = [
       "GET /",
       "GET /dashboard",
+      "GET /login",
+      "POST /auth/login",
+      "POST /auth/logout",
       "GET /users",
       "GET /users/api/:id",
       "POST /users/save",
@@ -56,6 +59,10 @@ describe("buildAdminRouter() registration shape", () => {
       "GET /destinations/api/:id",
       "POST /destinations/save",
       "POST /destinations/delete/:id",
+      "GET /reviews",
+      "GET /reviews/api/:id",
+      "POST /reviews/save",
+      "POST /reviews/delete/:id",
       "GET /system",
       "GET /rag-ai",
       "POST /rag-ai/reload-place-store",
@@ -68,6 +75,6 @@ describe("buildAdminRouter() registration shape", () => {
     ];
 
     expect(routes).toEqual(expected);
-    expect(routes).toHaveLength(19);
+    expect(routes).toHaveLength(26);
   });
 });

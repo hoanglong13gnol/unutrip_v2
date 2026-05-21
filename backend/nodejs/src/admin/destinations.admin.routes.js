@@ -10,7 +10,7 @@
 import * as destinationsRepository from "../repositories/destinations.repository.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml } from "./_shared/escape.js";
-import { renderLayout } from "./_shared/layout.js";
+import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 import { normalizeAppPlaceCategory } from "./_shared/categories.js";
 
 export function registerDestinationsAdminRoutes(router) {
@@ -63,7 +63,7 @@ export function registerDestinationsAdminRoutes(router) {
         DEST_ROWS: destRows,
         SCRIPT_NONCE_ATTR: scriptNonceAttr(cspNonce)
       });
-      res.send(renderLayout(content, "destinations", "Quản lý Địa điểm", cspNonce));
+      res.send(renderLayout(content, "destinations", "Quản lý Địa điểm", cspNonce, layoutFromRequest(req)));
     } catch (e) {
       res.status(500).send(e.message);
     }

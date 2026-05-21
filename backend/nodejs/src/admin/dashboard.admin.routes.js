@@ -8,7 +8,7 @@
 
 import { db } from "../db.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
-import { renderLayout } from "./_shared/layout.js";
+import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 
 export function registerDashboardAdminRoutes(router) {
   router.get("/", (_req, res) => {
@@ -57,7 +57,7 @@ export function registerDashboardAdminRoutes(router) {
         LATEST_USER_ROWS: latestUserRows,
         SCRIPT_NONCE_ATTR: scriptNonceAttr(cspNonce)
       });
-      res.send(renderLayout(content, "dashboard", undefined, cspNonce));
+      res.send(renderLayout(content, "dashboard", undefined, cspNonce, layoutFromRequest(req)));
     } catch (error) {
       res.status(500).send("Admin Dashboard Error: " + error.message);
     }

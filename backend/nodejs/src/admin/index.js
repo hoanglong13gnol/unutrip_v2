@@ -13,8 +13,10 @@
 
 import { Router } from "express";
 import { registerDashboardAdminRoutes } from "./dashboard.admin.routes.js";
+import { registerAuthAdminRoutes } from "./auth.admin.routes.js";
 import { registerUsersAdminRoutes } from "./users.admin.routes.js";
 import { registerDestinationsAdminRoutes } from "./destinations.admin.routes.js";
+import { registerReviewsAdminRoutes } from "./reviews.admin.routes.js";
 import { registerSystemAdminRoutes } from "./system.admin.routes.js";
 import { registerRagAiAdminRoutes } from "./ragAi.admin.routes.js";
 import { registerAiReportAdminRoutes } from "./aiReport.admin.routes.js";
@@ -22,8 +24,10 @@ import { registerAiReportAdminRoutes } from "./aiReport.admin.routes.js";
 export function buildAdminRouter() {
   const router = Router();
   registerDashboardAdminRoutes(router);
+  registerAuthAdminRoutes(router);
   registerUsersAdminRoutes(router);
   registerDestinationsAdminRoutes(router);
+  registerReviewsAdminRoutes(router);
   registerSystemAdminRoutes(router);
   registerRagAiAdminRoutes(router);
   registerAiReportAdminRoutes(router);

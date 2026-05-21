@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
 import * as usersRepository from "../repositories/users.repository.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml } from "./_shared/escape.js";
-import { renderLayout } from "./_shared/layout.js";
+import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 
 export function registerUsersAdminRoutes(router) {
   // 2. Quản lý Người dùng
@@ -59,7 +59,7 @@ export function registerUsersAdminRoutes(router) {
         USER_ROWS: userRows,
         SCRIPT_NONCE_ATTR: scriptNonceAttr(cspNonce)
       });
-      res.send(renderLayout(content, "users", "Quản lý Người dùng", cspNonce));
+      res.send(renderLayout(content, "users", "Quản lý Người dùng", cspNonce, layoutFromRequest(req)));
     } catch (e) {
       res.status(500).send(e.message);
     }

@@ -78,3 +78,89 @@ export async function updateDestinationReviewAggregate({ destinationId, rating, 
     destinationId
   ]);
 }
+
+const ADMIN_REVIEW_SELECT = `
+  SELECT r.id, r.user_id, r.destination_id, r.rating, r.comment, r.images_json, r.created_at,
+         u.full_name AS user_name, u.email AS user_email,
+         p.name AS place_name
+  FROM reviews r
+  JOIN users u ON u.id = r.user_id
+  JOIN app_places p ON p.id = r.destination_id
+`;
+
+export async function listAdminReviews() {
+  return db.query(`${ADMIN_REVIEW_SELECT} ORDER BY r.created_at DESC, r.id DESC LIMIT 500`);
+}
+
+export async function searchAdminReviews({ like }) {
+  return db.query(
+    `
+      ${ADMIN_REVIEW_SELECT}
+      WHERE CAST(r.id AS CHAR) LIKE ?
+         OR u.full_name LIKE ?
+         OR u.email LIKE ?
+         OR p.name LIKE ?
+         OR r.comment LIKE ?
+         OR CAST(r.rating AS CHAR) LIKE ?
+      ORDER BY r.created_at DESC, r.id DESC
+      LIMIT 500
+    `,
+    [like, like, like, like, like, like]
+  );
+}
+
+export async function getAdminReviewById(id) {
+  return db.get(`${ADMIN_REVIEW_SELECT} WHERE r.id = ? LIMIT 1`, [id]);
+}
+
+export async function deleteReviewById(id, conn) {
+  const runner = getRunner(conn);
+  const selectSql = "SELECT id, destination_id FROM reviews WHERE id = ? LIMIT 1";
+  let row;
+  if (runner) {
+    const [rows] = await runner.query(selectSql, [id]);
+    row = rows[0];
+  } else {
+    row = await db.get(selectSql, [id]);
+  }
+  if (!row) return null;
+
+  if (runner) {
+    await runner.query("DELETE FROM reviews WHERE id = ?", [id]);
+  } else {
+    await db.run("DELETE FROM reviews WHERE id = ?", [id]);
+  }
+  return row.destination_id;
+}
+
+export async function adminUpdateReview({ id, rating, comment }, conn) {
+  const runner = getRunner(conn);
+  const selectSql = "SELECT id, destination_id FROM reviews WHERE id = ? LIMIT 1";
+  let row;
+  if (runner) {
+    const [rows] = await runner.query(selectSql, [id]);
+    row = rows[0];
+  } else {
+    row = await db.get(selectSql, [id]);
+  }
+  if (!row) return null;
+
+  if (runner) {
+    await runner.query("UPDATE reviews SET rating = ?, comment = ? WHERE id = ?", [rating, comment, id]);
+  } else {
+    await db.run("UPDATE reviews SET rating = ?, comment = ? WHERE id = ?", [rating, comment, id]);
+  }
+  return row.destination_id;
+}
+
+export async function recalculateDestinationReviewAggregate(destinationId, conn) {
+  const agg = await getReviewAggregateByDestinationId(destinationId, conn);
+  await updateDestinationReviewAggregate(
+    {
+      destinationId,
+      rating: Number(agg.avg ?? 0),
+      reviewCount: Number(agg.cnt ?? 0)
+    },
+    conn
+  );
+}

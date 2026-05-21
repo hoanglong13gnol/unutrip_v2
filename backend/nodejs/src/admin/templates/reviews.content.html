@@ -1,0 +1,158 @@
+
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fadeIn">
+            <div class="p-6 border-b border-gray-50 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center bg-white">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Danh sách Đánh giá</h3>
+                    <p class="text-xs text-gray-400 mt-1">Tìm theo người dùng, địa điểm, nội dung, điểm hoặc ID</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <form method="get" action="/admin/reviews" class="flex gap-2">
+                        <input type="search" name="q" value="««SEARCH_Q»»" placeholder="Tìm kiếm..."
+                            class="min-w-[200px] flex-1 sm:flex-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <button type="submit" class="bg-gray-100 text-gray-700 text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-gray-200 transition uppercase">
+                            <i class="fas fa-search mr-1"></i> Tìm
+                        </button>
+                        ««CLEAR_FILTER_LINK»»
+                    </form>
+                </div>
+                <span class="bg-blue-100 text-blue-600 text-xs font-bold px-3 py-1 rounded-full uppercase self-start sm:self-auto">««REVIEW_COUNT»» kết quả</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                        <tr>
+                            <th class="px-8 py-4">ID</th>
+                            <th class="px-8 py-4">Người dùng</th>
+                            <th class="px-8 py-4">Địa điểm</th>
+                            <th class="px-8 py-4 text-center">Điểm</th>
+                            <th class="px-8 py-4">Nội dung</th>
+                            <th class="px-8 py-4 text-center">Ảnh</th>
+                            <th class="px-8 py-4 text-center">Ngày tạo</th>
+                            <th class="px-8 py-4 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        ««REVIEW_ROWS»»
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="reviewModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 id="reviewModalTitle" class="text-xl font-bold text-gray-800">Chi tiết đánh giá</h3>
+                    <button type="button" onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600 transition text-2xl leading-none">&times;</button>
+                </div>
+                <form id="reviewForm" class="p-8 overflow-y-auto custom-scrollbar space-y-5">
+                    <input type="hidden" name="id" id="reviewId">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase">Người dùng</label>
+                            <input type="text" id="reviewUserName" readonly class="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-600">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-gray-400 uppercase">Địa điểm</label>
+                            <input type="text" id="reviewPlaceName" readonly class="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-600">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase">Điểm đánh giá (1–5)</label>
+                        <select name="rating" id="reviewRating" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                            <option value="1">1 sao</option>
+                            <option value="2">2 sao</option>
+                            <option value="3">3 sao</option>
+                            <option value="4">4 sao</option>
+                            <option value="5">5 sao</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase">Nội dung</label>
+                        <textarea name="comment" id="reviewComment" required rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-y"></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase">Hình ảnh đính kèm</label>
+                        <div id="reviewImages" class="flex flex-wrap gap-3"></div>
+                    </div>
+                    <p id="reviewMeta" class="text-[11px] text-gray-400"></p>
+                </form>
+                <div class="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
+                    <button type="button" onclick="closeReviewModal()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition">Huỷ</button>
+                    <button type="button" onclick="saveReview()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-lg shadow-blue-200">Lưu</button>
+                </div>
+            </div>
+        </div>
+
+        <script««SCRIPT_NONCE_ATTR»»>
+            function showReviewModal(id) {
+                const modal = document.getElementById('reviewModal');
+                const form = document.getElementById('reviewForm');
+                form.reset();
+                document.getElementById('reviewId').value = '';
+                document.getElementById('reviewImages').innerHTML = '';
+                document.getElementById('reviewMeta').innerText = '';
+
+                fetch('/admin/reviews/api/' + id)
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (!data || !data.id || data.success === false) {
+                            alert(data && data.message ? data.message : 'Không tải được dữ liệu');
+                            return;
+                        }
+                        document.getElementById('reviewId').value = data.id;
+                        document.getElementById('reviewUserName').value = (data.user_name || '') + (data.user_email ? ' (' + data.user_email + ')' : '');
+                        document.getElementById('reviewPlaceName').value = data.place_name || ('#' + data.destination_id);
+                        document.getElementById('reviewRating').value = String(data.rating || 5);
+                        document.getElementById('reviewComment').value = data.comment || '';
+                        document.getElementById('reviewMeta').innerText = 'ID #' + data.id + ' · Địa điểm #' + data.destination_id + ' · Người dùng #' + data.user_id;
+
+                        const imagesEl = document.getElementById('reviewImages');
+                        const images = Array.isArray(data.images) ? data.images : [];
+                        if (!images.length) {
+                            imagesEl.innerHTML = '<span class="text-sm text-gray-400">Không có ảnh</span>';
+                        } else {
+                            imagesEl.innerHTML = images.map(function(url) {
+                                return '<a href="' + url + '" target="_blank" rel="noopener" class="block w-20 h-20 rounded-xl overflow-hidden border border-gray-200 hover:ring-2 hover:ring-blue-400 transition"><img src="' + url + '" alt="Review" class="w-full h-full object-cover"></a>';
+                            }).join('');
+                        }
+                        modal.classList.remove('hidden');
+                    })
+                    .catch(function() { alert('Lỗi mạng'); });
+            }
+
+            function closeReviewModal() {
+                document.getElementById('reviewModal').classList.add('hidden');
+            }
+
+            async function saveReview() {
+                const form = document.getElementById('reviewForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                const res = await fetch('/admin/reviews/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const body = await res.json().catch(function() { return {}; });
+                if (res.ok && body.success) {
+                    location.reload();
+                } else {
+                    alert(body.message || 'Lỗi khi lưu');
+                }
+            }
+
+            async function deleteReview(id) {
+                if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này? Điểm trung bình của địa điểm sẽ được cập nhật lại.')) return;
+                const res = await fetch('/admin/reviews/delete/' + id, { method: 'POST' });
+                const body = await res.json().catch(function() { return {}; });
+                if (res.ok && body.success) {
+                    location.reload();
+                } else {
+                    alert(body.message || 'Lỗi khi xóa đánh giá');
+                }
+            }
+        </script>
