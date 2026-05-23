@@ -25,11 +25,11 @@ COPY tests/fixtures/rag_corpus_sample.jsonl tests/fixtures/places_app_sample.jso
 
 RUN test -f scripts/docker_entrypoint.sh \
     && test -f tests/fixtures/rag_corpus_sample.jsonl \
+    && sed -i 's/\r$//' scripts/*.sh \
+    && chmod +x scripts/docker_entrypoint.sh \
     && pip install --no-cache-dir --no-deps -e .
-
-COPY --chmod=755 scripts/docker_entrypoint.sh scripts/docker_entrypoint.sh
 
 EXPOSE 8001
 
-ENTRYPOINT ["scripts/docker_entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "scripts/docker_entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
