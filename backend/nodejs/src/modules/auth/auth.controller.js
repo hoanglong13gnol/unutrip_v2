@@ -9,7 +9,7 @@ export async function register(req, res) {
   const schema = z.object({
     fullName: z.string().min(1),
     email: z.string().email(),
-    password: z.string().min(4),
+    password: z.string().min(8),
     phone: z.string().optional().nullable()
   });
 

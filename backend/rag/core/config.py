@@ -95,8 +95,6 @@ class Settings(BaseModel):
 
     ai_runtime_mode: str = os.getenv("AI_RUNTIME_MODE", "mock")
     enable_gemini: bool = env_bool("ENABLE_GEMINI", False)
-    enable_lora: bool = env_bool("ENABLE_LORA", False)
-    enable_validator: bool = env_bool("ENABLE_VALIDATOR", False)
 
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")

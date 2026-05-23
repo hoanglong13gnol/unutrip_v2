@@ -7,7 +7,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { TRUST_PROXY } from "./config/env.js";
+import { TRUST_PROXY, getCorsOriginConfig } from "./config/env.js";
 import { buildRouter } from "./routes.js";
 import { buildAdminRouter } from "./admin.js";
 import { requestIdMiddleware } from "./middlewares/requestId.middleware.js";
@@ -58,7 +58,12 @@ export function createApp() {
     })
   );
 
-  app.use(cors());
+  const corsOrigins = getCorsOriginConfig();
+  if (process.env.NODE_ENV === "production" && corsOrigins) {
+    app.use(cors({ origin: corsOrigins }));
+  } else {
+    app.use(cors());
+  }
   app.use(cookieParser());
   app.use(express.json({ limit: "2mb" }));
   app.use(express.urlencoded({ extended: false }));

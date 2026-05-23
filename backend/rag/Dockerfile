@@ -14,7 +14,9 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir .
 
 COPY jobs scripts eval data ./
+COPY tests/fixtures ./tests/fixtures
 RUN pip install --no-cache-dir --no-deps -e. \
+    && python jobs/build_rag_artifacts.py --from-fixture \
     && chmod +x scripts/docker_entrypoint.sh
 
 EXPOSE 8001

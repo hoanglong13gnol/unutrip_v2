@@ -1,0 +1,67 @@
+name: Stack smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 1"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "database/**"
+      - "docker-compose.yml"
+      - "scripts/smoke_staging_e2e.sh"
+      - ".env.example"
+      - ".github/workflows/stack-smoke.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "database/**"
+      - "docker-compose.yml"
+      - "scripts/smoke_staging_e2e.sh"
+      - ".env.example"
+      - ".github/workflows/stack-smoke.yml"
+
+jobs:
+  stack-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare .env
+        run: cp .env.example .env
+
+      - name: Inject CI secrets
+        run: |
+          {
+            echo "JWT_SECRET=$(python -c 'print(\"x\"*40)')"
+            echo "RAG_INTERNAL_API_KEY=ci-internal-key-32-chars-min!!"
+            echo "RAG_ADMIN_API_KEY=ci-admin-key-32-chars-minimum!!!"
+            echo "ADMIN_BASIC_USER=ciadmin"
+            echo "ADMIN_BASIC_PASS=ci-admin-pass-32-chars-min"
+            echo "GEMINI_API_KEY=ci-placeholder-gemini-key"
+          } >> .env
+
+      - name: Build RAG fixture artifacts (host)
+        working-directory: backend/rag
+        run: |
+          pip install -e ".[dev]"
+          python jobs/build_rag_artifacts.py --from-fixture
+
+      - name: Docker Compose up (wait for healthy)
+        run: docker compose up -d --build --wait
+
+      - name: Stack smoke E2E
+        env:
+          RAG_INTERNAL_API_KEY: ci-internal-key-32-chars-min!!
+        run: bash scripts/smoke_staging_e2e.sh
+
+      - name: Compose logs on failure
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs db-migrate --tail 40
+          docker compose logs rag --tail 40
+          docker compose logs backend --tail 40

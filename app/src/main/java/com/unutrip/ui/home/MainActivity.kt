@@ -46,7 +46,6 @@ class MainActivity : AppCompatActivity() {
             R.id.destinationDetailFragment,
             R.id.mapFragment,
             R.id.itineraryDetailFragment,
-            R.id.aiSuggestFragment,
             R.id.settingsFragment,
         )
 

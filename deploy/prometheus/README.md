@@ -1,5 +1,7 @@
 # Prometheus / alerting (UnuTrip)
 
+Stack overview: [`../README.md`](../README.md)
+
 ## RAG rules
 
 Copy `unutrip-rag-alerts.yml` into your Prometheus `rule_files` config.

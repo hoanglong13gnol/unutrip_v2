@@ -1,0 +1,22 @@
+# Production overrides for root docker-compose.yml
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Notes:
+# - Set strong secrets in .env (JWT_SECRET, MYSQL_*, RAG_* keys, ADMIN_BASIC_*).
+# - Put nginx (or another reverse proxy) in front; do not expose MySQL publicly.
+
+services:
+  mysql:
+    ports: []
+
+  rag:
+    environment:
+      RAG_ENV: production
+      RAG_DEBUG: "false"
+
+  backend:
+    environment:
+      NODE_ENV: production
+      ALLOW_ADMIN_OPEN: "false"

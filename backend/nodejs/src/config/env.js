@@ -88,6 +88,14 @@ export function assertSafeProductionConfig() {
   if (["1", "true", "yes", "on"].includes(ragDebug)) {
     throw new Error("[config] RAG_DEBUG must be false in production.");
   }
+
+  const adminUser = process.env.ADMIN_BASIC_USER?.trim();
+  const adminPass = process.env.ADMIN_BASIC_PASS?.trim();
+  if (!adminUser || !adminPass) {
+    throw new Error(
+      "[config] NODE_ENV=production requires ADMIN_BASIC_USER and ADMIN_BASIC_PASS for /admin."
+    );
+  }
 }
 
 function envInt(name, fallback) {
@@ -151,3 +159,20 @@ export function getResolvedAiModelUrl() {
 
 /** Node admin → FastAPI `/admin/ai/debug-query` (full RAG + Gemini; cần lâu hơn gọi RAG thường). */
 export const RAG_ADMIN_DEBUG_TIMEOUT_MS = envInt("RAG_ADMIN_DEBUG_TIMEOUT_MS", 120_000);
+
+/** Dev-only: allow unauthenticated /admin when ADMIN_BASIC_* unset (requires NODE_ENV=development). */
+export const ALLOW_ADMIN_OPEN = envBool("ALLOW_ADMIN_OPEN", false);
+
+/** Max POST /api/ai/* requests per IP per minute (0 = off). Applied in all NODE_ENV. */
+export const AI_RATE_LIMIT_PER_MINUTE = Math.max(0, envInt("AI_RATE_LIMIT_PER_MINUTE", 60));
+
+/** Comma-separated browser origins for CORS in production (empty = cors default). */
+export function getCorsOriginConfig() {
+  const raw = process.env.CORS_ORIGINS;
+  if (!raw || !String(raw).trim()) return null;
+  const origins = String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return origins.length ? origins : null;
+}

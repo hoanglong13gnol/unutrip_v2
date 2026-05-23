@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+vi.mock("dotenv", () => ({
+  default: { config: vi.fn(() => ({ parsed: {} })) }
+}));
+
 describe("v2 place feature flags", () => {
   beforeEach(() => {
     vi.resetModules();

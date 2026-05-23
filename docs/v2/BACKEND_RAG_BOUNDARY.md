@@ -4,6 +4,8 @@
 
 Define clear ownership boundaries between Node backend and FastAPI RAG to reduce coupling and migration risk.
 
+**Related:** [`BACKEND_ARCHITECTURE.md`](BACKEND_ARCHITECTURE.md) · [`RAG_ARCHITECTURE.md`](RAG_ARCHITECTURE.md) · [`PHASE7_NODE_ANDROID_PARITY.md`](PHASE7_NODE_ANDROID_PARITY.md)
+
 ## Ownership split
 
 ## Node backend owns

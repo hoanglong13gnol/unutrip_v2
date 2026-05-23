@@ -7,5 +7,7 @@ venv
 .env.*
 .git
 .gitignore
-tests
+tests/*
+!tests/fixtures/
+!tests/fixtures/**
 reports/**/*.log

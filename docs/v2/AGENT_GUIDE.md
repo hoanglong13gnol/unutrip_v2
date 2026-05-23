@@ -1,9 +1,9 @@
 # Hướng dẫn Agent — UNUtrip v2
 
-Tài liệu **bàn giao** cho agent / dev mới: đã làm gì, còn gì, chạy thế nào, tránh lỗi gì.  
-Repo: `UNUtrip_v2` (tách từ demo `e:\UNUtrip` — **không sửa** demo gốc).
+Tài liệu **bàn giao** cho agent / dev mới: kiến trúc, trạng thái code, lệnh, pitfalls.  
+Index tài liệu: [`README.md`](README.md) · Repo tách từ `e:\UNUtrip` (demo gốc **không sửa**).
 
-**Cập nhật:** sau P0–P3b + Phase D (một phần). Chi tiết lịch sử commit: `README_UPDATING_CLEAN_v2.md`.
+**Lịch sử phase (archive):** [`backup_suport_file/README_UPDATING_CLEAN_v2.md`](../../backup_suport_file/README_UPDATING_CLEAN_v2.md)
 
 ---
 
@@ -12,178 +12,131 @@ Repo: `UNUtrip_v2` (tách từ demo `e:\UNUtrip` — **không sửa** demo gốc
 | Thành phần | Vai trò |
 |------------|---------|
 | `app/` | Android — gọi **Node**, không gọi RAG trực tiếp |
-| `backend/nodejs/` | Express API, JWT, MySQL, proxy RAG, `place_id_map` |
-| `backend/rag/` | FastAPI: BM25/hybrid retrieval + Gemini/template generation |
+| `backend/nodejs/` | Express API, JWT, MySQL, proxy RAG, admin web |
+| `backend/rag/` | FastAPI: BM25/hybrid retrieval + Gemini/template |
 | `database/migrations/` | Schema v2 (`app_places`, `rag_knowledge_base`, …) |
 | `docker-compose.yml` | MySQL + Redis + RAG + Node + `db-migrate` |
+| `backup_suport_file/` | Luận văn / use case — **không** spec runtime |
 
-**Luồng RAG:** Android → Node (`/api/ai/rag-chat`) → RAG (`/v1/rag/chat/simple`) → artifact BM25 trên disk.
+**Luồng RAG:** Android → Node (`/api/ai/rag-chat`) → RAG (`/v1/rag/chat/simple`) → BM25 artifact trên disk.
 
-**Boundary:** `docs/v2/BACKEND_RAG_BOUNDARY.md` — Node persist, RAG không ghi DB app.
+**Boundary:** [`BACKEND_RAG_BOUNDARY.md`](BACKEND_RAG_BOUNDARY.md)
 
 ---
 
 ## 2. Cấu trúc RAG (đọc trước khi sửa)
 
+Chi tiết: [`RAG_ARCHITECTURE.md`](RAG_ARCHITECTURE.md)
+
 ```text
 backend/rag/
-  app/routers/          # HTTP only — rag, health, admin, ai_itinerary
+  app/routers/          # HTTP only
   services/             # RagService, ItineraryService, admin/*
-  pipelines/
-    rag_pipeline.py     # Orchestration (~130 dòng) — KHÔNG nhét logic retrieval vào đây
-    policies/           # location_filter, generation_router
-    response_builder.py, request_logger.py
-  providers/            # gemini_provider, template_provider (wrap llm/)
-  retrieval/            # bm25, hybrid, intent, fusion, rerank, place_store
-  retrieval/scoring/    # travel_rules, dedup
-  generation/           # context + prompt builders
-  llm/                  # Gemini client, executor, cache
-  repositories/         # artifact_store (fetch/package runtime files)
-  core/                 # config, security, artifacts, metrics, readiness
-  domain/               # models, contracts (Node parity)
-  jobs/                 # build_rag_artifacts, package_rag_artifacts
-  scripts/              # verify, eval, fetch artifacts, docker entrypoint
-  tests/                # pytest — 130 tests, coverage gate 70%
+  pipelines/            # RagPipeline + policies + response_builder
+  retrieval/            # bm25, hybrid, intent, fusion, rerank
+  providers/ + llm/     # Gemini + template
+  jobs/ + scripts/      # build artifacts, verify, eval
+  tests/                # pytest + contracts/
 ```
 
-**Quy tắc khi refactor:**
-
-- Logic retrieval → `retrieval/` hoặc `retrieval/scoring/`
-- Policy (fallback, location) → `pipelines/policies/`
-- Provider SDK → `providers/` + `llm/`
-- Không thêm `sys.path` hack — dùng `pip install -e ".[dev]"`
+**Quy tắc refactor:** retrieval → `retrieval/`; policy → `pipelines/policies/`; không `sys.path` hack — `pip install -e ".[dev]"`.
 
 ---
 
-## 3. Đã làm (bắt buộc hiểu — đừng làm lại / đừng phá)
+## 3. Đã làm (đừng phá / đừng làm lại)
 
-### 3.1 Kiến trúc & làm sạch (Phase A–B)
+### 3.1 Node v2 place tables
 
-- [x] Xóa dead code: `retrieval/normalizer.py`, `rerank_stub.py`
-- [x] Chuẩn hóa text: `core/text_normalization.py`
-- [x] Tách pipeline: policies, providers, response_builder, request_logger
-- [x] `LocationFilter` + `target_city` / `target_province` có test
+- [x] Destinations API đọc **`app_places`** + **`place_images`**
+- [x] Reviews aggregate ghi **`app_places`**
+- [x] `place_id_map` + flags `USE_V2_PLACE_TABLES` / `PLACE_ID_LEGACY_FALLBACK`
+- [x] Contract tests: `ragContract*.test.js`, `tests/contracts/`
 
-### 3.2 Chất lượệ & CI (Phase C, P2–P3)
+### 3.2 RAG kiến trúc & CI
 
-- [x] **130** pytest RAG, coverage **~86%**, gate **≥70%** (`pyproject.toml`)
-- [x] Ruff + mypy: `core`, `domain`, `generation`, `providers`, `pipelines`, `repositories`, `retrieval`, `app` (routers: `no-any-return` off — `follow_imports=skip` + thin HTTP)
-- [x] CI `rag-ci.yml`: lint, mypy, pytest, Docker RAG, verify manifest, golden eval
-- [x] CI `backend-ci.yml`: **chỉ** Node + `database/` (không trigger trùng khi sửa RAG)
-- [x] Docker build Node trong backend-ci
-- [x] Workflow manual: `rag-artifact-release.yml` (zip fixture)
+- [x] Pipeline tách: policies, providers, response_builder
+- [x] Pytest RAG **~138 tests** (xem §7 — một vài test pipeline có thể fail local)
+- [x] Coverage gate **≥70%** (`pyproject.toml`)
+- [x] CI: `rag-ci.yml`, `backend-ci.yml`, `android-ci.yml`
+- [x] Artifact pipeline: `jobs/build_rag_artifacts.py`, manifest, `artifact_store`
 
-### 3.3 Coverage đã mở (P3, P3b)
+### 3.3 Database & Docker
 
-- [x] Test unit: `rag_pipeline`, `request_logger`, retrieval (`place_store`, `bm25`, `hybrid`, `logger`, `rerank`)
-- [x] Bỏ omit: hầu hết `retrieval/*`, `pipelines/rag_pipeline`, `intent_parser`
-- [x] Vẫn **omit** (cố ý): `services/admin/*`, `services/itinerary/builder|catalog|scoring`
+- [x] `database/migrations/` canonical; `database.sql` deprecated bootstrap
+- [x] Compose service `db-migrate`; backend `USE_V2_PLACE_TABLES=true`
 
-### 3.4 Artifact & deploy (P0, Phase D)
+### 3.4 Admin Node
 
-- [x] Manifest path **relative** (`data/processed/...`) — CI `--strict` từ chối path tuyệt đối
-- [x] `repositories/artifact_store.py`, `fetch_rag_artifacts.py`, `package_rag_artifacts.py`
-- [x] Docker `entrypoint` fetch khi `RAG_ARTIFACT_BUNDLE_URL` / `RAG_ARTIFACT_SOURCE_DIR`
-- [x] Docs: `ARTIFACT_POLICY.md`, `DEPLOY_CHECKLIST.md`, `deploy/prometheus/unutrip-rag-alerts.yml`
+- [x] Admin tách module: `admin/index.js` + `*.admin.routes.js`
 
-### 3.5 Database v2 (P1)
+### 3.5 Repo hygiene
 
-- [x] `database/migrations/` = canonical schema
-- [x] `database/scripts/run_migrations.sh` + Compose service `db-migrate`
-- [x] `database.sql` deprecated — chỉ bootstrap DB trống
-- [x] Compose: `USE_V2_PLACE_TABLES=true`, `PLACE_ID_LEGACY_FALLBACK=false` trên backend
-
-### 3.6 Node / contract
-
-- [x] Destinations API đọc `app_places`
-- [x] `placeIdMap.repository` + flags v2 (`USE_V2_PLACE_TABLES`)
-- [x] Contract tests: `tests/contracts/`, Node `ragContract*.test.js`
-
-### 3.7 Hygiene repo (P0)
-
-- [x] `.gitignore`: cache Python, `.coverage`, `data/raw/`, uploads Node, `dist/`
+- [x] `.gitignore`: artifacts lớn, `.env`, uploads, cache
+- [x] Tài liệu luận văn → `backup_suport_file/`
 
 ---
 
-## 4. Chưa làm / cần làm (ưu tiên cho agent tiếp theo)
+## 4. Còn làm / backlog
 
-### P0 — Không được regression
+Chi tiết ưu tiên: [`README_TOTAL_GUIDE.md`](README_TOTAL_GUIDE.md)
 
-- [ ] Sau test local: **không commit** thay đổi `built_at_utc` trong manifest nếu chỉ chạy pytest/build fixture (checksum giữ nguyên thì restore file)
-- [ ] Không commit `.pkl`, JSONL lớn, `.env`, `__pycache__`
+### P0 — Không regression
 
-### Cao — Production
+- [ ] Không commit `.pkl`, JSONL lớn, `.env`, manifest chỉ đổi timestamp
+- [ ] Fix test đang fail (Node 4, RAG 2 — xem §7)
 
-| # | Task | Gợi ý |
-|---|------|--------|
-| 1 | ~~Build corpus production~~ | ✅ 5592 docs từ `unudata_v2_test` — `publish_rag_bundle.ps1` hoặc `build_rag_artifacts.py --from-db` |
-| 2 | ~~Upload bundle~~ | ✅ [Release `rag-artifacts-2026-05-19`](https://github.com/hoanglong13gnol/unutrip_v2/releases/tag/rag-artifacts-2026-05-19) — set `RAG_ARTIFACT_BUNDLE_URL` |
-| 3 | ~~Staging E2E (local)~~ | ✅ `unudata_v2_test` + build `--from-db` + `smoke_staging_e2e.ps1` (Docker: compose + `.sh`) |
-| 4 | Branch protection | GitHub: bắt buộc `RAG service` + `Backend CI` trên `main` |
+### Cao
 
-### Trung bình — Chất lượng
+| # | Task | Ghi chú |
+|---|------|---------|
+| 1 | Branch protection GitHub | Bắt buộc `rag-ci` + `backend-ci` trên `main` |
+| 2 | CI stack smoke | Workflow `docker compose` + `smoke_staging_e2e` — chưa có |
+| 3 | `backend` depends_on RAG **healthy** | Hiện `service_started` trong compose |
 
-| # | Task | Gợi ý |
-|---|------|--------|
-| 5 | ~~`travel_rules.py` coverage~~ | ✅ `test_travel_rules_golden.py` — **~94%** file, 24 golden cases |
-| 6 | ~~Mypy `retrieval/`, `app/`~~ | ✅ CI/Makefile; sklearn/sentence-transformers/otel stubs ignored |
-| 7 | Bỏ omit admin/itinerary | Test từng service hoặc giữ omit có comment |
-| 8 | Golden full index | `eval/golden_queries.json` trên index production |
-| 9 | Cross-encoder prod | `pip install -e ".[rerank]"`, `RAG_ENABLE_CROSS_ENCODER=true` |
-
-### Thấp — Sản phẩm / legacy
+### Trung bình
 
 | # | Task |
 |---|------|
-| 10 | Deprecate route không `/v1` |
-| 11 | `ENABLE_LORA` / `ENABLE_VALIDATOR`: implement hoặc xóa flag |
-| 12 | Tách `services/itinerary/category.py` ra config |
-| 13 | Phase 8 Android: test ViewModel, `RagService` |
-| 14 | `USE_V2_PLACE_TABLES=true` mặc định local sau khi team bỏ XAMPP legacy |
+| 4 | Test admin/itinerary services RAG (hiện omit coverage) |
+| 5 | Golden eval trên full production index |
+| 6 | Xóa `[NEARBY] console.log` trong `destinations.service.js` |
+
+### Thấp / Phase 8 Android
+
+| # | Task |
+|---|------|
+| 7 | Hilt/DI, OkHttp 401 interceptor |
+| 8 | Xóa `GEMINI_API_KEY` khỏi `build.gradle` |
+| 9 | Gỡ hoặc wire legacy `AISuggestFragment` |
+| 10 | Deprecate RAG routes không `/v1` |
 
 ---
 
 ## 5. Lệnh thường dùng
 
-### RAG (luôn từ `backend/rag`)
-
-```bash
-cd backend/rag
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-
-make quality          # ruff + mypy + pytest + verify manifest
-make test-fast        # pytest không coverage
-make clean            # xóa cache dev
-
-python jobs/build_rag_artifacts.py --from-fixture   # CI / không DB
-python jobs/build_rag_artifacts.py --from-db --export-places   # production
-
-uvicorn app.main:app --reload --port 8001
-```
-
-### Monorepo / stack
+### Stack Docker
 
 ```bash
 cp .env.example .env
 docker compose up -d --build
+curl http://localhost:3000/api/health
+curl http://localhost:8001/health/ready
+```
 
-# Smoke (stack đang chạy)
-export RAG_INTERNAL_API_KEY=...
-bash scripts/smoke_staging_e2e.sh   # Linux / Git Bash
-# Windows (PowerShell):
-#   .\scripts\staging_local.ps1    # probe DB + build artifacts
-#   .\scripts\smoke_staging_e2e.ps1
+### RAG (`backend/rag`)
+
+```bash
+pip install -e ".[dev]"
+make quality          # hoặc ruff + mypy + pytest + verify
+python jobs/build_rag_artifacts.py --from-fixture
+uvicorn app.main:app --reload --port 8001
 ```
 
 ### Node
 
 ```bash
 cd backend/nodejs
-npm ci
-npm test
-npm run lint
+npm ci && npm test && npm run lint
 ```
 
 ### Database
@@ -193,89 +146,85 @@ export MYSQL_HOST=127.0.0.1 MYSQL_USER=... MYSQL_PASSWORD=... DB_NAME=unudata
 bash database/scripts/run_migrations.sh
 ```
 
----
+### Android
 
-## 6. CI — workflow map
-
-| File | Khi nào chạy | Làm gì |
-|------|----------------|--------|
-| `.github/workflows/rag-ci.yml` | `backend/rag/**` | Ruff, mypy, pytest 70%, Docker RAG, verify, eval golden CI |
-| `.github/workflows/backend-ci.yml` | `backend/nodejs/**`, `database/**` | ESLint, Prettier, Vitest, Docker Node, `bash -n` migrations |
-| `.github/workflows/rag-artifact-release.yml` | Manual | Package zip fixture → artifact |
-| `.github/workflows/android-ci.yml` | `app/**` | Unit test + lint + assemble devDebug |
-
-**Local = CI RAG:**
+```properties
+# local.properties
+API_BASE_URL=http://10.0.2.2:3000/api/
+```
 
 ```bash
-cd backend/rag
-ruff check app core domain generation llm pipelines providers repositories retrieval services tests scripts jobs
-python -m mypy --explicit-package-bases -p core -p domain -p generation -p providers -p pipelines -p repositories -p retrieval -p app
-python jobs/build_rag_artifacts.py --from-fixture
-python -m pytest tests/ -q
-python scripts/verify_rag_artifacts.py --strict
+./gradlew :app:assembleDevDebug :app:testDevDebugUnitTest
 ```
 
 ---
 
-## 7. Pitfalls (đọc kỹ)
+## 6. CI — workflow map
+
+| File | Trigger | Việc chính |
+|------|---------|------------|
+| `rag-ci.yml` | `backend/rag/**` | Ruff, mypy, pytest, Docker, verify, golden eval |
+| `backend-ci.yml` | `backend/nodejs/**`, `database/**` | ESLint, Vitest, Docker Node |
+| `android-ci.yml` | `app/**` | Unit test, lint, assemble devDebug |
+| `rag-artifact-release*.yml` | Manual | Package/upload RAG bundle |
+
+---
+
+## 7. Trạng thái test (cập nhật khi chạy local)
+
+Chạy trước PR:
+
+```bash
+cd backend/rag && python -m pytest tests/ -q
+cd backend/nodejs && npm test
+./gradlew :app:testDevDebugUnitTest
+```
+
+**Kỳ vọng hiện tại (có thể thay đổi):**
+
+| Suite | Số lượng | Ghi chú |
+|-------|----------|---------|
+| RAG pytest | ~138 | Đa số pass; known fail có thể ở `test_rag_pipeline_unit.py` |
+| Node Vitest | 52 (18 files) | Một số fail env/route — fix trước khi merge nếu đụng Node |
+| Android unit | xem CI | Robolectric + mockk |
+
+---
+
+## 8. Pitfalls
 
 | Vấn đề | Cách tránh |
 |--------|------------|
-| Manifest path Windows tuyệt đối | `write_manifest` dùng `artifact_path_for_manifest()` — CI strict sẽ fail |
-| Test ghi đè manifest | Monkeypatch `settings.root_dir` / `indexes_dir`; không gọi `write_manifest` trỏ ra temp ngoài svc root |
-| Sau `build --from-db` local | Pytest tự rebuild fixture nếu `document_count` > 50; hoặc chạy `build_rag_artifacts.py --from-fixture` |
-| `.env` có `RAG_INTERNAL_API_KEY` | API tests mock pipeline và tắt key trong `conftest` — không ảnh hưởng staging `.env` |
-| RAG `/health/ready` 503 | Thiếu `bm25_index.pkl` — build fixture hoặc fetch bundle |
-| Compose DB trống | Cần `db-migrate` hoặc `DATABASE_BOOTSTRAP_LEGACY=true` |
-| Place id không map | Kiểm tra `place_id_map`, `USE_V2_PLACE_TABLES`, legacy fallback |
-| sklearn version | Phải `scikit-learn==1.7.1` (pickle index) |
-| Commit secrets | Chỉ `.env.example` — không `.env` |
-| SQL dump ở root | Dùng `database/dumps/` (`/*.sql` gitignored) — xem `docs/v2/NAMING.md` |
-| Manifest chỉ đổi timestamp | Pre-commit `manifest-staged-diff`; commit khi hash/count đổi |
-| Node `src/routes/*.routes.js` shim | Đã gỡ — API registry: `src/api/router.js` |
+| Manifest path tuyệt đối Windows | Dùng path relative; `verify --strict` |
+| RAG `/health/ready` 503 | Thiếu `bm25_index.pkl` — `build --from-fixture` hoặc fetch bundle |
+| Compose DB trống | `db-migrate` + `DATABASE_BOOTSTRAP_LEGACY=true` hoặc import dump |
+| Place id không map | `place_id_map`, `USE_V2_PLACE_TABLES`, legacy fallback |
+| sklearn pickle | `scikit-learn==1.7.1` cho index |
+| Doc luận văn cũ | Đọc `docs/v2/*` + code, không tin `backup_suport_file/` flow doc |
+| Android gọi RAG trực tiếp | Sai — chỉ qua Node `/api/ai/*` |
 
 ---
 
-## 8. Checklist trước khi PR (agent)
+## 9. Checklist PR
 
-1. [ ] `cd backend/rag && make quality` (hoặc từng bước nếu chậm)
-2. [ ] `cd backend/nodejs && npm test` (nếu đụng Node/contract)
-3. [ ] Không file nhạy cảm / artifact lớn trong `git status`
-4. [ ] Manifest chỉ đổi khi **cố ý** rebuild production
-5. [ ] Cập nhật doc nếu đổi env, API, migration, artifact policy
-6. [ ] Commit message: `feat|fix|chore|test(rag|node): ...` — một mục đích rõ
-
-**Không** tự `git push` / tạo PR trừ khi user yêu cầu.
+1. [ ] RAG quality / Node test nếu đụng backend
+2. [ ] Không secrets / artifacts lớn trong `git status`
+3. [ ] Cập nhật doc nếu đổi env, API, migration
+4. [ ] Không tự `git push` / tạo PR trừ khi user yêu cầu
 
 ---
 
-## 9. Tài liệu tham chiếu
+## 10. Tài liệu tham chiếu
 
 | File | Nội dung |
 |------|----------|
-| `README.md` | Tổng quan monorepo |
-| **`docs/v2/README_TOTAL_GUIDE.md`** | **Playbook khắc phục điểm yếu (P0–P3)** |
-| `docs/v2/NAMING.md` | Product vs package vs DB names |
-| `README_UPDATING_CLEAN_v2.md` | Roadmap chi tiết Phase A–E, P0–P3 |
-| `README_UPDATING_CLEAN.md` | Lịch sử Phase 0–7 |
-| `docs/v2/RAG_ARCHITECTURE.md` | Kiến trúc mục tiêu |
-| `docs/v2/BACKEND_RAG_BOUNDARY.md` | Ranh giới Node ↔ RAG |
-| `docs/v2/PHASE7_NODE_ANDROID_PARITY.md` | Place tables, flags |
-| `backend/rag/README.md` | Setup RAG |
-| `backend/rag/docs/ARTIFACT_POLICY.md` | Manifest / rebuild |
-| `backend/rag/docs/RETRIEVAL.md` | BM25 + TF-IDF + vector RRF |
-| `backend/rag/docs/DEPLOY_CHECKLIST.md` | Prod deploy |
-| `database/README.md` | Migrations |
-| `deploy/prometheus/README.md` | Alerting |
+| [`README.md`](README.md) | Index docs v2 |
+| [`README_TOTAL_GUIDE.md`](README_TOTAL_GUIDE.md) | Backlog P0–P3 |
+| [`BACKEND_ARCHITECTURE.md`](BACKEND_ARCHITECTURE.md) | Node layers + v2 status |
+| [`RAG_ARCHITECTURE.md`](RAG_ARCHITECTURE.md) | RAG layers + flow |
+| [`PHASE7_NODE_ANDROID_PARITY.md`](PHASE7_NODE_ANDROID_PARITY.md) | Place flags + contract |
+| [`REFACTOR_PHASE_PLAN.md`](REFACTOR_PHASE_PLAN.md) | Phase 1–8 status |
+| [`../../README.md`](../../README.md) | Monorepo root |
+| [`../../database/README.md`](../../database/README.md) | Migrations |
+| [`../../backend/rag/docs/`](../../backend/rag/docs/) | Artifact, deploy, retrieval |
 
----
-
-## 10. Gợi ý task cho agent mới (pick one)
-
-1. ~~**Prod artifact:** build `--from-db`, package, upload~~ — dùng `scripts/publish_rag_bundle.ps1`; còn bước upload S3/GitHub URL thật.  
-2. ~~**travel_rules** golden tests~~ — xong (~94% file).  
-3. ~~**Mypy `app/` + `retrieval/`**~~ — xong; tiếp: `services/` (itinerary/admin) nếu cần.  
-4. **Android Phase 8:** test `ChatbotViewModel` / `RagService` errors.  
-5. **Deprecate legacy routes:** `/rag/*` → chỉ `/v1`, cập nhật Node client nếu cần.
-
-Khi xong task, cập nhật mục **§4** và **§3** trong file này hoặc `README_UPDATING_CLEAN_v2.md`.
+Khi đóng task lớn: cập nhật §3–§4 file này hoặc archive log trong `backup_suport_file/`.

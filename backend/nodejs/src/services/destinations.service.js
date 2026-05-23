@@ -31,22 +31,6 @@ export async function listNearbyDestinationsForUser({ userId, lat, lng, radiusKm
     limit
   });
 
-  console.log("[NEARBY]", {
-    lat,
-    lng,
-    radiusKm,
-    limit,
-    count: rows.length,
-    first: rows.slice(0, 5).map((r) => ({
-      id: r.id,
-      name: r.name,
-      province: r.province,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      distance_km: Number(r.distance_km).toFixed(2)
-    }))
-  });
-
   const rowsWithImages = await attachDestinationImages(rows);
   return rowsWithImages.map((r) => {
     const raw = r.distance_km;

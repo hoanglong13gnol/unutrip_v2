@@ -49,26 +49,26 @@ describe("adminAuth middleware", () => {
   beforeEach(() => {
     savedUser = process.env.ADMIN_BASIC_USER;
     savedPass = process.env.ADMIN_BASIC_PASS;
-    delete process.env.ADMIN_BASIC_USER;
-    delete process.env.ADMIN_BASIC_PASS;
+    vi.unstubAllEnvs();
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    if (savedUser === undefined) {
-      delete process.env.ADMIN_BASIC_USER;
-    } else {
+    vi.unstubAllEnvs();
+    if (savedUser !== undefined) {
       process.env.ADMIN_BASIC_USER = savedUser;
     }
-    if (savedPass === undefined) {
-      delete process.env.ADMIN_BASIC_PASS;
-    } else {
+    if (savedPass !== undefined) {
       process.env.ADMIN_BASIC_PASS = savedPass;
     }
     warnSpy.mockRestore();
   });
 
   it("dev-mode passthrough: returns 200 OK and warns exactly once when env vars are unset", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("ALLOW_ADMIN_OPEN", "true");
+    vi.stubEnv("ADMIN_BASIC_USER", "");
+    vi.stubEnv("ADMIN_BASIC_PASS", "");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -76,10 +76,26 @@ describe("adminAuth middleware", () => {
 
     expect(res.text).toBe("OK");
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][0]).toMatch(/ADMIN_BASIC_USER\/ADMIN_BASIC_PASS not set/);
+    expect(warnSpy.mock.calls[0][0]).toMatch(/ALLOW_ADMIN_OPEN=true/);
+  });
+
+  it("returns 401 when ADMIN_BASIC_* unset and ALLOW_ADMIN_OPEN is false", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("ALLOW_ADMIN_OPEN", "false");
+    vi.stubEnv("ADMIN_BASIC_USER", "");
+    vi.stubEnv("ADMIN_BASIC_PASS", "");
+    const mw = await loadMiddleware();
+    const app = buildApp(mw);
+
+    await request(app).get("/admin/probe").expect(401);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it("dev-mode warning is one-time across multiple requests in the same module instance", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("ALLOW_ADMIN_OPEN", "true");
+    vi.stubEnv("ADMIN_BASIC_USER", "");
+    vi.stubEnv("ADMIN_BASIC_PASS", "");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -91,8 +107,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, no Authorization header → redirects HTML clients to /admin/login", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -106,8 +122,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, no Authorization header → 401 JSON for API-style POST", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = express();
     app.post("/admin/probe", mw, (req, res) => {
@@ -125,8 +141,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, no Authorization header → 401 Unauthorized with WWW-Authenticate for plain requests", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -138,8 +154,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, wrong scheme (Bearer) → 401 Unauthorized", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -153,8 +169,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, malformed Basic value (missing colon) → 401 Unauthorized", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -170,8 +186,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, wrong password → 401 Unauthorized", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -185,8 +201,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, wrong username → 401 Unauthorized", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 
@@ -200,8 +216,8 @@ describe("adminAuth middleware", () => {
   });
 
   it("gated mode, correct credentials → 200 OK with no WWW-Authenticate header", async () => {
-    process.env.ADMIN_BASIC_USER = "admin";
-    process.env.ADMIN_BASIC_PASS = "secret";
+    vi.stubEnv("ADMIN_BASIC_USER", "admin");
+    vi.stubEnv("ADMIN_BASIC_PASS", "secret");
     const mw = await loadMiddleware();
     const app = buildApp(mw);
 

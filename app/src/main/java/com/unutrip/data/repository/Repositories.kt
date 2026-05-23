@@ -567,3 +567,50 @@ class ItineraryRepository(private val api: ApiService) {
         }
     }
 }
+
+// ==================== USER REPOSITORY ====================
+
+class UserRepository(private val api: ApiService) {
+
+    private fun authHeader(token: String): String =
+        if (token.startsWith("Bearer ")) token else "Bearer $token"
+
+    suspend fun getStats(token: String): Resource<UserStats> {
+        return try {
+            val response = api.getUserStats(authHeader(token))
+            if (response.isSuccessful && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.parseErrorMessageOrNull() ?: "Không tải được thống kê")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Lỗi kết nối: ${e.message}")
+        }
+    }
+
+    suspend fun updateProfile(token: String, user: User): Resource<User> {
+        return try {
+            val response = api.updateProfile(authHeader(token), user)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.parseErrorMessageOrNull() ?: "Cập nhật thất bại")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Lỗi kết nối: ${e.message}")
+        }
+    }
+
+    suspend fun uploadAvatar(token: String, body: okhttp3.MultipartBody.Part): Resource<User> {
+        return try {
+            val response = api.uploadAvatar(authHeader(token), body)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.parseErrorMessageOrNull() ?: "Tải ảnh thất bại")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Lỗi kết nối: ${e.message}")
+        }
+    }
+}

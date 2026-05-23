@@ -1,107 +1,130 @@
-# RAG Architecture (V2 Target)
+# RAG Architecture (FastAPI — V2)
 
 ## Purpose
 
-Define the target FastAPI RAG architecture and migration direction aligned with v2 database-first refactor.
+Mô tả kiến trúc dịch vụ **RAG + generation** (`backend/rag/`) và cách nó tích hợp với Node.
 
-## Architecture goals
+## Vai trò trong hệ thống
 
-- Keep runtime stable for Node integration.
-- Separate concerns between API layer, retrieval pipeline, provider logic, and data build/indexing.
-- Establish `rag_knowledge_base` as the knowledge source of truth.
-- Keep BM25/vector indexes as derived runtime artifacts.
+- **Retrieval:** BM25 (+ TF-IDF rerank; optional dense vector + RRF).
+- **Generation:** Gemini (primary) hoặc template fallback.
+- **Itinerary suggestions:** preview / options — **không** ghi DB app.
+- **Contract:** Trả `rawPlaceId`, `place_key`, metadata; Node resolve sang `app_places.id`.
 
-## Target architecture style
+Boundary: [`BACKEND_RAG_BOUNDARY.md`](BACKEND_RAG_BOUNDARY.md).
 
-### Route layer (FastAPI)
-
-- HTTP concerns only:
-  - request/response validation
-  - auth/internal-key middleware application
-  - error envelope handling
-- No retrieval/generation orchestration inside route handlers.
-
-### Service layer
-
-- Application services orchestrate:
-  - retrieval execution
-  - grounding/context building
-  - provider invocation
-  - fallback policy
-  - output shaping
-
-### Retrieval pipeline layer
-
-- Encapsulate:
-  - retrievers (BM25/vector/hybrid)
-  - reranking/scoring
-  - context assembly
-- Independent from provider SDK specifics.
-
-### Provider layer
-
-- Gemini provider isolated behind provider interface/adapter.
-- Fallback strategy lives in service/pipeline policy, not SDK wrapper code.
-- Provider can be replaced without changing routes.
-
-### Repository/data-access layer
-
-- Clear separation of:
-  - runtime artifact loaders
-  - corpus export inputs
-  - optional future DB-backed readers
-
-## Source-of-truth model
-
-- `rag_knowledge_base` is canonical knowledge data source.
-- BM25/vector files are build outputs generated from canonical corpus.
-- Runtime behavior should be reproducible from source-of-truth exports.
-
-## RAG data migration direction (required order)
-
-1. **Do not switch runtime to direct MySQL reads first.**
-2. Export `rag_knowledge_base` into corpus files (JSONL/parquet as needed).
-3. Build BM25/vector index artifacts from that corpus.
-4. Keep runtime serving from index artifacts for initial cutover.
-5. Consider direct DB-backed online retrieval later only if needed.
-
-## Suggested logical module layout
+## Layout thực tế (code)
 
 ```text
 backend/rag/
   app/
-    main.py
-    routers/
-      health.py
-      rag.py
-      ai_itinerary.py
-      admin.py
-    schemas/
+    main.py                 # lifespan, middleware, /v1 mirror
+    routers/                # rag, health, admin/*, ai_itinerary
+    schemas/                # Pydantic request/response
+    middleware.py           # internal API key, CORS, request ID
   services/
-    rag_service.py
-    itinerary_service.py
+    rag_service.py          # delegate pipeline
+    itinerary/              # preview, options, builder, scoring
+    admin/                  # ops, data quality, log store
   pipelines/
-    retrieval_pipeline.py
-    grounding_pipeline.py
-  retrievers/
+    rag_pipeline.py         # orchestration (~130 lines)
+    policies/               # LocationFilter, GenerationRouter
+    response_builder.py
+    request_logger.py
+  retrieval/
+    hybrid_retriever.py     # BM25 + optional vector
     bm25_retriever.py
-    vector_retriever.py
-    hybrid_retriever.py
-  providers/
-    gemini_provider.py
-    template_provider.py
-  repositories/
-    corpus_repository.py
-    artifact_repository.py
-  jobs/
-    export_from_rag_kb.py
-    build_indexes.py
+    intent_parser.py
+    fusion.py, rerank.py
+    place_store.py          # app place snapshot (places_app.json)
+    scoring/travel_rules.py
+  generation/
+    context_builder.py
+    prompt_builder.py
+  providers/                # gemini_provider, template_provider
+  llm/                      # gemini client, executor, response_cache
+  core/                     # config, security, artifacts, redis, metrics
+  repositories/artifact_store.py
+  domain/                   # shared models
+  jobs/                     # build_rag_artifacts, package_rag_artifacts
+  scripts/                  # verify, eval, fetch artifacts, entrypoint
+  tests/                    # pytest + contracts parity Node
+  data/
+    indexes/                # manifest (git); bm25 pkl (gitignore)
+    processed/              # corpus jsonl (gitignore)
+    tests/fixtures/         # mini corpus CI
 ```
 
-This is a target design reference and does not require immediate file movement.
+## Luồng request `/v1/rag/chat/simple`
 
-## Runtime contract expectations
+1. Router validate body (`RagChatSimpleRequest`)
+2. `RagService.rag_chat_simple` → threadpool
+3. `RagPipeline.run`:
+   - `IntentParser` → province/city/days
+   - `HybridRetriever` → candidates
+   - `LocationFilter` → lọc địa lý
+   - `ContextBuilder` + `PromptBuilder`
+   - `GenerationRouter` → Gemini hoặc template
+   - `response_builder` → `answer`, `places[]`, `warnings`
+4. Optional Redis cache (Gemini response)
+5. JSON response — Node normalize qua `schemas/ragContract.js`
 
-- Node-facing APIs (`/rag/chat/simple`, `/rag/chat`, `/ai/itinerary-*`) remain stable during internal refactor.
-- Returned recommendation metadata can include `rawPlaceId`/`place_key`, but persistence id resolution stays in Node.
+## Source of truth dữ liệu
 
+| Layer | Vai trò |
+|-------|---------|
+| MySQL `rag_knowledge_base` | Canonical knowledge (export → corpus) |
+| `places_rag_documents.jsonl` | Corpus file build index |
+| `bm25_index.pkl` | Runtime retrieval artifact |
+| `embedding_vectors.npz` | Optional dense recall |
+| `rag_artifacts_manifest.json` | Checksum + document count (tracked git) |
+
+Runtime **không** đọc MySQL trực tiếp cho retrieval — đọc artifacts trên disk (reproducible build).
+
+Pipeline build:
+
+```bash
+cd backend/rag
+python jobs/build_rag_artifacts.py --from-db --export-places
+python scripts/verify_rag_artifacts.py --strict
+```
+
+Chi tiết: [`../../backend/rag/docs/ARTIFACT_POLICY.md`](../../backend/rag/docs/ARTIFACT_POLICY.md).
+
+## HTTP surface
+
+| Route | Caller | Ghi chú |
+|-------|--------|---------|
+| `POST /v1/rag/chat/simple` | Node (khuyến nghị) | Contract chính |
+| `POST /rag/chat/simple` | Legacy mirror | Cùng handler |
+| `POST /v1/ai/itinerary-preview` | Node | JWT qua Node |
+| `POST /v1/ai/itinerary-options` | Node | JWT qua Node |
+| `GET /health`, `/health/ready` | Compose, probes | Ready cần index |
+| `/admin/*` | Node admin | `RAG_ADMIN_API_KEY` |
+
+## Bảo mật & vận hành
+
+- Production: `RAG_INTERNAL_API_KEY`, `RAG_ADMIN_API_KEY` (khác nhau).
+- Rate limit: Redis hoặc in-memory (`RAG_RATE_LIMIT_PER_MINUTE`).
+- Metrics: `/metrics` khi `RAG_ENABLE_METRICS=true`.
+- Deploy: [`../../backend/rag/docs/DEPLOY_CHECKLIST.md`](../../backend/rag/docs/DEPLOY_CHECKLIST.md).
+
+## Test & contract parity
+
+- Fixture: [`fixtures/rag_chat_simple_sample.json`](fixtures/rag_chat_simple_sample.json)
+- RAG: `tests/contracts/test_rag_node_fixture.py`
+- Node: `tests/ragContractParity.test.js`
+
+Chạy:
+
+```bash
+cd backend/rag && python -m pytest tests/contracts/ -q
+cd backend/nodejs && npm test -- ragContract
+```
+
+## Hướng phát triển
+
+- Deprecate routes không prefix `/v1` (giữ mirror đến khi Node/client cập nhật xong).
+- Golden eval trên full production index (`eval/golden_queries.json`).
+- Cross-encoder rerank optional (`requirements-rerank.txt`).
+- DB-backed online retrieval — chỉ khi corpus > ~50k và artifact rebuild không đủ linh hoạt.

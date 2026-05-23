@@ -217,14 +217,11 @@ YÊU CẦU: Trả về JSON đúng cấu trúc:
     console.log(`[AI] RAG response received (${responseText.length} chars)`);
   }
 
-  console.log("[AI] Raw Response Text:", responseText);
-
   responseText = responseText.replace(/```json\n?|\n?```/g, "").trim();
 
   let aiResult;
   try {
     aiResult = JSON.parse(responseText);
-    console.log("[AI] Parsed JSON days count:", aiResult.days?.length || 0);
   } catch (e) {
     return { ok: false, reason: "invalid_ai_json", raw: responseText, error: e };
   }

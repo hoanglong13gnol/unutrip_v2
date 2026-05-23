@@ -3,7 +3,8 @@
  *
  * - When BOTH `ADMIN_BASIC_USER` and `ADMIN_BASIC_PASS` are set:
  *   accepts signed session cookie OR HTTP Basic credentials.
- * - When either env var is missing: passthrough (dev mode) with one-time warning.
+ * - When either env var is missing: passthrough only if NODE_ENV=development
+ *   AND ALLOW_ADMIN_OPEN=true; otherwise fail closed (401/redirect).
  *
  * Unauthenticated HTML requests redirect to `/admin/login`.
  * JSON/API-style admin POSTs return 401 JSON.
@@ -17,6 +18,46 @@ let warned = false;
 
 const OPEN_PATHS = new Set(["/login", "/auth/login"]);
 
+function allowAdminOpenPassthrough() {
+  const nodeEnv = process.env.NODE_ENV || "development";
+  const allowOpen = ["1", "true", "yes", "on"].includes(
+    String(process.env.ALLOW_ADMIN_OPEN || "").trim().toLowerCase()
+  );
+  return nodeEnv === "development" && allowOpen;
+}
+
+function denyUnconfiguredAdmin(req, res) {
+  if (OPEN_PATHS.has(req.path)) {
+    req.adminUser = null;
+    return true;
+  }
+
+  const acceptsHtml = (req.headers.accept || "").includes("text/html");
+  const isGet = req.method === "GET" || req.method === "HEAD";
+
+  if (isGet && acceptsHtml) {
+    const nextPath = encodeURIComponent(req.originalUrl || "/admin/dashboard");
+    res.redirect(302, `/admin/login?next=${nextPath}`);
+    return true;
+  }
+
+  const wantsJson =
+    req.headers.accept?.includes("application/json") ||
+    req.headers["content-type"]?.includes("application/json") ||
+    req.path.startsWith("/users/api/") ||
+    req.path.startsWith("/destinations/api/") ||
+    req.path.startsWith("/reviews/api/") ||
+    req.method === "POST";
+
+  if (wantsJson) {
+    sendUnauthorizedJson(res);
+    return true;
+  }
+
+  sendUnauthorized(res);
+  return true;
+}
+
 export function isAdminAuthConfigured() {
   return Boolean(process.env.ADMIN_BASIC_USER && process.env.ADMIN_BASIC_PASS);
 }
@@ -25,7 +66,7 @@ function warnOnce() {
   if (warned) return;
   warned = true;
   console.warn(
-    "[adminAuth] ADMIN_BASIC_USER/ADMIN_BASIC_PASS not set — /admin is unauthenticated (dev mode)"
+    "[adminAuth] ADMIN_BASIC_USER/ADMIN_BASIC_PASS not set — /admin open (dev + ALLOW_ADMIN_OPEN=true)"
   );
 }
 
@@ -88,9 +129,13 @@ export function adminAuthMiddleware(req, res, next) {
   }
 
   if (!user || !pass) {
-    warnOnce();
-    req.adminUser = null;
-    return next();
+    if (allowAdminOpenPassthrough()) {
+      warnOnce();
+      req.adminUser = null;
+      return next();
+    }
+    if (denyUnconfiguredAdmin(req, res)) return;
+    return;
   }
 
   if (OPEN_PATHS.has(req.path)) {

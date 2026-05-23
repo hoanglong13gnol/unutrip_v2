@@ -55,3 +55,42 @@ jobs:
         run: bash -n database/scripts/run_migrations.sh
       - name: List migrations (order check)
         run: ls -1 database/migrations/[0-9][0-9][0-9]_*.sql | wc -l
+
+  mysql-migrate:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: unudata
+          MYSQL_USER: unutrip
+          MYSQL_PASSWORD: unutrip_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
+      - name: Run migrations (legacy bootstrap)
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_USER: unutrip
+          MYSQL_PASSWORD: unutrip_pass
+          DB_NAME: unudata
+          DATABASE_BOOTSTRAP_LEGACY: "true"
+          SKIP_MIGRATION_VALIDATION: "true"
+          MIGRATIONS_DIR: ${{ github.workspace }}/database/migrations
+          LEGACY_SQL: ${{ github.workspace }}/backend/nodejs/database.sql
+          QUICK_POPULATE_SQL: ${{ github.workspace }}/database/quick_populate_app_places_from_legacy_database_sql.sql
+        run: bash database/scripts/run_migrations.sh
+      - name: Assert app_places populated
+        run: |
+          count=$(mysql -h127.0.0.1 -P3306 -uunutrip -punutrip_pass unudata -Nse "SELECT COUNT(*) FROM app_places")
+          test "$count" -gt 0

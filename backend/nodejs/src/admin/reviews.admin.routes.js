@@ -7,6 +7,7 @@ import { withTransaction } from "../shared/db/withTransaction.js";
 import * as reviewsRepository from "../repositories/reviews.repository.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml } from "./_shared/escape.js";
+import { adminErrorMessage } from "./_shared/adminErrors.js";
 import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 
 function renderStars(rating) {
@@ -80,7 +81,7 @@ export function registerReviewsAdminRoutes(router) {
       });
       res.send(renderLayout(content, "reviews", "Quản lý Đánh giá", cspNonce, layoutFromRequest(req)));
     } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).send(adminErrorMessage(e));
     }
   });
 
@@ -98,7 +99,7 @@ export function registerReviewsAdminRoutes(router) {
         images: parseJsonArray(review.images_json, null)
       });
     } catch (e) {
-      return res.status(500).json({ success: false, message: e.message });
+      return res.status(500).json({ success: false, message: adminErrorMessage(e) });
     }
   });
 
@@ -132,7 +133,11 @@ export function registerReviewsAdminRoutes(router) {
       return res.json({ success: true });
     } catch (e) {
       const status = e.statusCode === 404 ? 404 : 500;
-      return res.status(status).json({ success: false, message: e.message });
+      const msg =
+        status === 404
+          ? e.message || "Không tìm thấy đánh giá"
+          : adminErrorMessage(e, "Không lưu được đánh giá");
+      return res.status(status).json({ success: false, message: msg });
     }
   });
 
@@ -156,7 +161,11 @@ export function registerReviewsAdminRoutes(router) {
       return res.json({ success: true });
     } catch (e) {
       const status = e.statusCode === 404 ? 404 : 500;
-      return res.status(status).json({ success: false, message: e.message });
+      const msg =
+        status === 404
+          ? e.message || "Không tìm thấy đánh giá"
+          : adminErrorMessage(e, "Không xóa được đánh giá");
+      return res.status(status).json({ success: false, message: msg });
     }
   });
 }

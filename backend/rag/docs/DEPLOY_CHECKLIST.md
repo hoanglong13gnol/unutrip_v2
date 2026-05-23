@@ -1,5 +1,7 @@
 # RAG deploy checklist (Phase D + E)
 
+**Related:** [`../../../deploy/README.md`](../../../deploy/README.md) · [`PRODUCTION.md`](PRODUCTION.md) · [`ARTIFACT_POLICY.md`](ARTIFACT_POLICY.md)
+
 ## Pre-deploy (artifact)
 
 1. On a machine with MySQL + v2 schema populated:

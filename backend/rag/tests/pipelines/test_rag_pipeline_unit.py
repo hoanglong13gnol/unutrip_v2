@@ -91,7 +91,9 @@ def test_rag_pipeline_run_happy_path(pipeline_parts: dict[str, MagicMock]) -> No
     assert out["debug"]["cache_hit"] is False
     assert out["latency_ms"]["total"] >= 0
 
-    pipeline_parts["retriever"].retrieve.assert_called_once_with("điểm tham quan hà giang", top_k=6)
+    pipeline_parts["retriever"].retrieve.assert_called_once_with(
+        "điểm tham quan hà giang", top_k=6, province_norm_override=None
+    )
     pipeline_parts["router"].generate.assert_called_once()
     pipeline_parts["ai_logger"].log.assert_called_once()
 
@@ -107,4 +109,6 @@ def test_rag_pipeline_itinerary_raises_top_k(pipeline_parts: dict[str, MagicMock
     pipeline_parts["retriever"].intent_parser.parse.return_value = _parsed(intent="itinerary", days=3)
     pipe = RagPipeline()
     pipe.run("lịch trình 3 ngày", top_k=6)
-    pipeline_parts["retriever"].retrieve.assert_called_once_with("lịch trình 3 ngày", top_k=9)
+    pipeline_parts["retriever"].retrieve.assert_called_once_with(
+        "lịch trình 3 ngày", top_k=9, province_norm_override=None
+    )

@@ -13,7 +13,7 @@ import com.unutrip.data.model.ItineraryDay
 import com.unutrip.data.model.ItineraryItem
 import com.unutrip.data.model.SaveAIItineraryRequest
 
-class GeminiService {
+class AiChatService {
 
     private val api = RetrofitClient.apiService
     private val gson = Gson()

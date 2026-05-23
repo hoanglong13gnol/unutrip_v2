@@ -2,6 +2,7 @@ package com.unutrip.data.api
 
 import android.util.Log
 import com.unutrip.BuildConfig
+import com.unutrip.utils.SessionManager
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -18,12 +19,16 @@ object RetrofitClient {
     @Volatile
     private var httpCacheDir: File? = null
 
+    @Volatile
+    private var sessionManager: SessionManager? = null
+
     /**
      * Gọi một lần từ [com.unutrip.UNUtripApp] để bật cache HTTP (GET) trong [cacheDir]/http_cache.
      */
     fun install(context: android.content.Context) {
-        if (httpCacheDir != null) return
+        if (httpCacheDir != null && sessionManager != null) return
         synchronized(this) {
+            sessionManager = SessionManager.getInstance(context.applicationContext)
             if (httpCacheDir != null) return
             httpCacheDir = File(context.applicationContext.cacheDir, "http_cache").apply {
                 if (!exists()) mkdirs()
@@ -44,15 +49,20 @@ object RetrofitClient {
         val response = chain.proceed(request)
         if (!response.isSuccessful) {
             Log.e("RetrofitError", "HTTP ${response.code} ${response.message} for URL: ${request.url}")
-            val bodyString = response.peekBody(Long.MAX_VALUE).string()
-            Log.e("RetrofitError", "Error Body: $bodyString")
+            if (BuildConfig.DEBUG) {
+                val bodyString = response.peekBody(Long.MAX_VALUE).string()
+                Log.e("RetrofitError", "Error Body: $bodyString")
+            }
         }
         response
     }
 
     private val okHttpClient by lazy {
+        val sm = sessionManager
+            ?: throw IllegalStateException("Call RetrofitClient.install(context) before using apiService")
         val builder = OkHttpClient.Builder()
             .addInterceptor(RequestHeadersInterceptor())
+            .addInterceptor(AuthInterceptor(sm))
             .addInterceptor(loggingInterceptor)
             .addInterceptor(errorLoggingInterceptor)
             .connectTimeout(120, TimeUnit.SECONDS)

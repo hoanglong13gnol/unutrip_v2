@@ -7,14 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.unutrip.data.model.ChatMessage
 import com.unutrip.data.model.ChatbotResult
 import com.unutrip.utils.ChatTripDayParser
-import com.unutrip.utils.GeminiService
+import com.unutrip.utils.AiChatService
 import com.unutrip.utils.RagService
 import kotlinx.coroutines.launch
 
 class ChatbotViewModel : ViewModel() {
 
     private val ragService = RagService()
-    private val geminiService = GeminiService()
+    private val aiChatService = AiChatService()
 
     private val _messages = MutableLiveData<List<ChatMessage>>(emptyList())
     val messages: LiveData<List<ChatMessage>> = _messages
@@ -87,7 +87,7 @@ class ChatbotViewModel : ViewModel() {
     }
 
     private suspend fun getFinalChatbotResult(userText: String): ChatbotResult {
-        val preparedQuery = geminiService.prepareRagQuery(
+        val preparedQuery = aiChatService.prepareRagQuery(
             token = token,
             userMessage = userText
         )
@@ -179,7 +179,7 @@ class ChatbotViewModel : ViewModel() {
         }
 
         if (!ragFailed) {
-            val validation = geminiService.validateRagOutputFull(
+            val validation = aiChatService.validateRagOutputFull(
                 token = token,
                 userMessage = buildValidationUserMessage(
                     userText = userText,
@@ -229,12 +229,12 @@ class ChatbotViewModel : ViewModel() {
 
         val tripHint = computeTripDaysHint(userText, tripDays)
         return if (ragFailed) {
-            geminiService.fallbackChat(
+            aiChatService.fallbackChat(
                 token = token,
                 userMessage = userText
             ).copy(tripDaysHint = tripHint)
         } else {
-            geminiService.repairRagAnswer(
+            aiChatService.repairRagAnswer(
                 token = token,
                 userMessage = buildRepairUserMessage(
                     userText = userText,

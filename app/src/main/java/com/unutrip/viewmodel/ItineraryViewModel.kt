@@ -4,25 +4,18 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.unutrip.data.model.AIItineraryPreviewData
-import com.unutrip.data.model.AIItineraryPreviewRequest
-import com.unutrip.data.model.AIRecommendedDestination
-import com.unutrip.data.model.CreateItineraryFromSelectionRequest
-import com.unutrip.data.model.CreateItineraryFromSelectionResult
 import com.unutrip.data.model.CreateItineraryRequest
 import com.unutrip.data.model.Itinerary
 import com.unutrip.data.model.ItineraryItem
 import com.unutrip.data.model.UpdateItineraryItemRequest
 import com.unutrip.data.model.UpdateItineraryRequest
-import com.unutrip.data.model.SaveAIItineraryRequest
-import com.unutrip.data.model.SelectedAIDestination
 import com.unutrip.data.repository.DestinationRepository
 import com.unutrip.data.repository.ItineraryRepository
 import com.unutrip.utils.Resource
 import kotlinx.coroutines.launch
 import com.unutrip.data.model.AIItineraryOption
 import com.unutrip.data.model.AIItineraryOptionsData
+import com.unutrip.data.model.AIItineraryPreviewRequest
 import com.unutrip.data.model.CreateItineraryFromOptionRequest
 import com.unutrip.data.model.CreateItineraryFromOptionResult
 
@@ -31,23 +24,11 @@ class ItineraryViewModel(
     private val destRepo: DestinationRepository
 ) : ViewModel() {
 
-    private val geminiService = com.unutrip.utils.GeminiService()
-    private val gson = Gson()
-
     private val _itineraries = MutableLiveData<Resource<List<Itinerary>>>()
     val itineraries: LiveData<Resource<List<Itinerary>>> = _itineraries
 
     private val _itineraryDetail = MutableLiveData<Resource<Itinerary>>()
     val itineraryDetail: LiveData<Resource<Itinerary>> = _itineraryDetail
-
-    private val _aiSuggest = MutableLiveData<Resource<Unit>>()
-    val aiSuggest: LiveData<Resource<Unit>> = _aiSuggest
-
-    private val _aiPreview = MutableLiveData<Resource<AIItineraryPreviewData>>()
-    val aiPreview: LiveData<Resource<AIItineraryPreviewData>> = _aiPreview
-
-    private val _createFromAI = MutableLiveData<Resource<CreateItineraryFromSelectionResult>>()
-    val createFromAI: LiveData<Resource<CreateItineraryFromSelectionResult>> = _createFromAI
 
     private val _aiOptions = MutableLiveData<Resource<AIItineraryOptionsData>>()
     val aiOptions: LiveData<Resource<AIItineraryOptionsData>> = _aiOptions
@@ -253,39 +234,6 @@ class ItineraryViewModel(
         }
     }
 
-    fun previewAIItinerary(
-        title: String,
-        description: String?,
-        startDate: String,
-        endDate: String,
-        budget: Double?,
-        preferences: List<String>,
-        province: String?
-    ) {
-        viewModelScope.launch {
-            _isGenerating.value = true
-            _aiPreview.value = Resource.Loading
-
-            val request = AIItineraryPreviewRequest(
-                title = title,
-                description = description,
-                startDate = startDate,
-                endDate = endDate,
-                budget = budget,
-                preferences = preferences,
-                province = province
-            )
-
-            val result = repo.previewAIItinerary(token, request)
-            _aiPreview.value = result
-
-            if (result is Resource.Error) {
-                _messages.value = result.message
-            }
-
-            _isGenerating.value = false
-        }
-    }
     fun getAIItineraryOptions(
         title: String,
         description: String?,
@@ -352,90 +300,6 @@ class ItineraryViewModel(
             }
 
             _isGenerating.value = false
-        }
-    }
-
-    fun createItineraryFromSelection(
-        title: String,
-        description: String?,
-        startDate: String,
-        endDate: String,
-        budget: Double?,
-        selectedDestinations: List<AIRecommendedDestination>
-    ) {
-        viewModelScope.launch {
-            _isGenerating.value = true
-            _createFromAI.value = Resource.Loading
-
-            val request = CreateItineraryFromSelectionRequest(
-                title = title,
-                description = description,
-                startDate = startDate,
-                endDate = endDate,
-                estimatedBudget = budget,
-                selectedDestinations = selectedDestinations.map { destination ->
-                    SelectedAIDestination(
-                        rawPlaceId = destination.rawPlaceId,
-                        destinationId = destination.destinationId
-                    )
-                }
-            )
-
-            val result = repo.createItineraryFromSelection(token, request)
-            _createFromAI.value = result
-
-            if (result is Resource.Success) {
-                _messages.value = "Tạo lịch trình từ AI thành công!"
-                loadItineraries()
-            } else if (result is Resource.Error) {
-                _messages.value = result.message
-            }
-
-            _isGenerating.value = false
-        }
-    }
-
-    // Old flow: keep for compatibility. ItineraryFragment no longer calls this.
-    fun generateAIItinerary(
-        preferences: List<String>,
-        startDate: String,
-        endDate: String,
-        budget: Double?,
-        startLocation: String?
-    ) {
-        viewModelScope.launch {
-            _isGenerating.value = true
-            _aiSuggest.value = Resource.Loading
-
-            try {
-                val aiResponse = geminiService.suggestItinerary(
-                    token,
-                    preferences,
-                    startDate,
-                    endDate,
-                    budget,
-                    startLocation
-                )
-
-                val saveRequest = try {
-                    gson.fromJson(aiResponse, SaveAIItineraryRequest::class.java)
-                } catch (e: Exception) {
-                    _aiSuggest.value = Resource.Error("Lỗi cấu trúc lịch trình AI: ${e.message}")
-                    return@launch
-                }
-
-                val saveResult = repo.saveAIItinerary(token, saveRequest)
-                _aiSuggest.value = saveResult
-
-                if (saveResult is Resource.Success) {
-                    loadItineraries()
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("AI_SUGGEST", "Error", e)
-                _aiSuggest.value = Resource.Error("Lỗi AI: ${e.message}")
-            } finally {
-                _isGenerating.value = false
-            }
         }
     }
 }

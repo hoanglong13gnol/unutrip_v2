@@ -125,14 +125,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
-
-        <action
-            android:id="@+id/action_itineraryFragment_to_aiSuggestFragment"
-            app:destination="@id/aiSuggestFragment"
-            app:enterAnim="@anim/slide_in_up"
-            app:exitAnim="@anim/slide_out_down"
-            app:popEnterAnim="@anim/slide_in_down"
-            app:popExitAnim="@anim/slide_out_up" />
     </fragment>
 
     <!-- Itinerary Detail -->
@@ -185,12 +177,6 @@
         android:id="@+id/aiItineraryEditorFragment"
         android:name="com.unutrip.ui.itinerary.AIItineraryEditorFragment"
         android:label="Chỉnh tour AI" />
-    <!-- AI Suggest -->
-    <fragment
-        android:id="@+id/aiSuggestFragment"
-        android:name="com.unutrip.ui.itinerary.AISuggestFragment"
-        android:label="AI Gợi ý" />
-
     <!-- Chatbot -->
     <fragment
         android:id="@+id/chatbotFragment"

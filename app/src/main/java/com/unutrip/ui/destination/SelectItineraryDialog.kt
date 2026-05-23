@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.unutrip.R
 import com.unutrip.data.model.Itinerary
-import com.unutrip.ui.itinerary.ItineraryAdapter
+import com.unutrip.ui.itinerary.ItineraryListAdapter
 
 class SelectItineraryDialog(
     private val itineraries: List<Itinerary>,
@@ -34,7 +34,7 @@ class SelectItineraryDialog(
             tvEmpty.visibility = View.GONE
             rvItineraries.visibility = View.VISIBLE
 
-            val adapter = ItineraryAdapter(
+            val adapter = ItineraryListAdapter(
                 onClick = {
                     onSelect(it)
                     dismiss()

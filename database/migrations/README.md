@@ -6,7 +6,11 @@
 - **Data population migrations (`006`-`009`)**: populate v2 tables from legacy sources.
 - **Validation (`010`)**: read-only SELECT checks for migration parity and rule compliance.
 - **No destructive operations**: do not drop tables, do not drop indexes, and do not alter legacy tables.
-- Test these migrations on `unudata_v2_test` first before production use.
+- Test these migrations on `unudata_v2_test` (local dump in `database/dumps/`) before production use.
+
+### Runtime note (Node)
+
+After migrations 006+ populate, Node API `/destinations/*` reads **`app_places`** — legacy `destinations` remains for bootstrap/fallback only. See [`docs/v2/PHASE7_NODE_ANDROID_PARITY.md`](../../docs/v2/PHASE7_NODE_ANDROID_PARITY.md).
 
 ### How to apply
 
@@ -28,6 +32,7 @@ Apply in numeric order:
 - `009_populate_rag_knowledge_base.sql`
 - `010_v2_validation_queries.sql`
 - `011_create_itinerary_tables.sql`
+- `012_schema_migrations.sql` — tracks applied migration filenames (used by `run_migrations.sh`)
 
 ### Locked decisions (implemented by schema shape)
 

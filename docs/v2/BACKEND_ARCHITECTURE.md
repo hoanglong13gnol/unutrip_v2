@@ -1,104 +1,120 @@
-# Backend Architecture (V2 Target)
+# Backend Architecture (Node.js — V2)
 
 ## Purpose
 
-Define the target Node backend architecture for UNUtrip v2 while preserving Android API compatibility during migration.
+Mô tả kiến trúc **Node Express backend** thực tế và hướng mục tiêu, trong khi giữ **contract Android** ổn định (`/api/destinations/*`, `/api/itineraries/*`, …).
 
-## Current context
+## Trạng thái hiện tại (đối chiếu code)
 
-- v2 DB migrations are validated on `unudata_v2_test`.
-- Backend runtime still reads legacy tables (`destinations`, `destination_images`, `rag_places`) in some repositories/controllers (migrate to v2 `app_places`).
-- Android clients already depend on current API response shapes and endpoint behavior.
+### Đã migration sang v2
 
-## Target architecture style
+| Concern | Bảng runtime | Repository / module |
+|---------|--------------|---------------------|
+| Danh sách / chi tiết / nearby địa điểm | `app_places` | `repositories/destinations.repository.js` |
+| Ảnh địa điểm | `place_images` | `repositories/destinationImages.repository.js` |
+| Favorites existence check | `app_places` | `repositories/favorites.repository.js` |
+| Reviews + aggregate rating | `app_places` | `repositories/reviews.repository.js` |
+| Resolve RAG → app id | `place_id_map` (+ optional legacy) | `repositories/placeIdMap.repository.js` |
+| Admin stats | `app_places` | `admin/dashboard.admin.routes.js` |
 
-Adopt a modular layered architecture:
+### Legacy còn lại (có chủ đích)
 
-- **Routes/Controllers**
-  - HTTP-only responsibilities: request parsing, auth middleware, validation handoff, response return.
-  - No business logic and no inline SQL.
-- **Services**
-  - Business workflows and orchestration.
-  - Transaction boundaries for multi-step writes.
-  - Cross-module coordination (for example AI suggestion -> id resolution -> itinerary save flow).
-- **Repositories**
-  - SQL-only data access.
-  - Table/query ownership and reusable query methods.
-  - No HTTP or DTO formatting.
-- **Mappers/DTO**
-  - Output contract protection for Android.
-  - Stable field naming, nullability, and response envelope compatibility.
+| Path | Ghi chú |
+|------|---------|
+| `placeIdMap.repository.js` | Fallback `destinations` khi `PLACE_ID_LEGACY_FALLBACK=true` |
+| `seed.js` | Dev seed vẫn tham chiếu `destinations` — chỉ dùng bootstrap cũ |
+| `backend/nodejs/database.sql` | Bootstrap Docker DB trống; không phải schema runtime v2 |
 
-## Migration-first structure principle
+### API surface (giữ tên cũ cho Android)
 
-Use a strangler approach:
+- Route path: `/api/destinations/*` (không đổi).
+- DTO: `shared/dto/destinationDto.js` — field names Android (`reviewCount`, `openTime`, …).
+- Nguồn dữ liệu: **app-domain** (`app_places` + `place_images`), **không** đọc `rag_knowledge_base` cho API app.
 
-- Keep existing route files/endpoints initially.
-- Move internals behind repository/service/mapper layers first.
-- Avoid immediate route/file rewrites.
-- Change route internals incrementally, one path at a time.
+## Kiến trúc layered (target — phần lớn đã áp dụng)
 
-## V2 DB direction for backend reads/writes
+```
+HTTP Request
+    ↓
+modules/*/*.routes.js + *.controller.js   ← parse, auth, status code
+    ↓
+services/*.service.js                     ← business logic, orchestration
+    ↓
+repositories/*.repository.js              ← SQL only
+    ↓
+shared/dto/*.js                           ← Android contract mapping
+```
 
-### Read path transitions
+**Quy tắc:**
 
-- `destinations` read paths -> `app_places`
-- `destination_images` read paths -> `place_images`
-- `rag_places` rawPlaceId resolution -> `place_id_map`
+- Routes/controllers: không SQL inline (trừ admin HTML helpers nhỏ).
+- Services: không format HTTP response trực tiếp nếu có thể tách.
+- Repositories: không biết JWT / Android DTO.
 
-### Rules
+## Module ownership
 
-- `rag_knowledge_base` is **not** an Android app place API source.
-- Android-facing place APIs should remain app-domain (`app_places` + `place_images`) not knowledge-domain.
-- API response shape must remain stable while data source moves.
+| Module | Trách nhiệm |
+|--------|-------------|
+| `modules/auth`, `modules/users` | JWT, profile, avatar, preferences |
+| `modules/destinations` | CRUD/list/featured/nearby (app_places) |
+| `modules/favorites` | Yêu thích user |
+| `modules/reviews` | Review + cập nhật rating aggregate |
+| `modules/itineraries` | Lịch trình transactional |
+| `modules/ai` | Proxy RAG; resolve `rawPlaceId` trước persist |
+| `modules/health` | Liveness / readiness (optional RAG probe) |
+| `admin/*` | Admin web HTML — tách file theo section (Phase 4 admin shell) |
 
-## Module ownership model (Node)
+Registry API: `src/api/router.js` (không còn monolith `routes.js` shim lớn).
 
-- `places` module
-  - Place list/featured/nearby/detail reads from app-domain tables.
-- `favorites` module
-  - User favorite workflows, app place existence checks.
-- `reviews` module
-  - Review writes and rating aggregate updates.
-- `itineraries` module
-  - Transactional itinerary persistence and retrieval.
-- `ai` module
-  - RAG integration orchestration and rawPlaceId/place_key resolution prior to persistence.
-- `auth/users` modules
-  - Auth/profile concerns only.
-- `admin` module
-  - Admin-only concerns, isolated from Android API logic.
+## AI / itinerary flow
 
-## Compatibility guardrails
+1. Android → `POST /api/ai/*` hoặc `/api/itineraries/create-from-*`
+2. Controller validate + auth
+3. `services/ai.service.js` → HTTP tới RAG (`lib/ragUpstream.js`)
+4. RAG trả `rawPlaceId` / metadata
+5. `services/placeIdMap.service.js` → `app_places.id`
+6. `services/itineraries.service.js` persist (transaction)
 
-- Preserve existing endpoint paths.
-- Preserve existing response envelope semantics (`success`, `data`, paging fields, etc.).
-- Preserve destination DTO field names/types expected by Android.
-- Add contract checks before and after each data-source switch.
+Chi tiết boundary: [`BACKEND_RAG_BOUNDARY.md`](BACKEND_RAG_BOUNDARY.md).  
+Chi tiết flags v2: [`PHASE7_NODE_ANDROID_PARITY.md`](PHASE7_NODE_ANDROID_PARITY.md).
 
-## Recommended target folder pattern (logical)
+## Feature flags (place resolution)
+
+| Env | Local default | Docker Compose |
+|-----|---------------|----------------|
+| `USE_V2_PLACE_TABLES` | `false` | `true` |
+| `PLACE_ID_LEGACY_FALLBACK` | `true` (nếu v2 flag false) | `false` |
+
+Khi `USE_V2_PLACE_TABLES=true`: legacy `destinations` fallback bị tắt trong place-id resolution.
+
+## Hướng cải tiến còn lại
+
+- Gom naming module `destinations` → logical `places` (chỉ rename nội bộ, giữ route path).
+- `AuthService` / tách fat `ai.controller` nếu phình thêm.
+- Production guard: bắt buộc `ADMIN_BASIC_*`, harden upload static.
+- Xóa `console.log` debug (ví dụ `[NEARBY]` trong `destinations.service.js`).
+- Vitest: mở rộng integration destinations + upload security.
+
+## Target folder pattern (tham khảo — chưa rename hết)
 
 ```text
 backend/nodejs/src/
+  api/router.js
   modules/
-    places/
-      places.controller.js
-      places.service.js
-      places.repository.js
-      places.mapper.js
+    destinations/    # logical "places" — giữ tên file hiện tại
     favorites/
     reviews/
     itineraries/
     ai/
     auth/
     users/
-    admin/
-  shared/
-    db/
-    errors/
-    validation/
-    dto/
+    health/
+  admin/             # đã modular (dashboard, users, ragAi, …)
+  services/
+  repositories/
+  shared/dto/
+  lib/ragUpstream.js
+  config/env.js
 ```
 
-This pattern is a target direction, not a required immediate file move.
-
+Không bắt buộc rename ngay — ưu tiên contract Android và test parity.

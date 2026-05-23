@@ -2,9 +2,11 @@ package com.unutrip.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.google.gson.Gson
+import com.unutrip.BuildConfig
 import com.unutrip.data.model.User
 
 /**
@@ -22,6 +24,8 @@ class SessionManager private constructor(context: Context) {
         private val LEGACY_PLAIN_PREF_NAMES = listOf("SmartTravelSession", "UNUtripSession")
         private val LEGACY_ENCRYPTED_PREF_NAMES = listOf("SmartTravelSession_secure", "UNUtripSession_secure")
         private const val ENCRYPTED_PREF_NAME = "UNUtripSession_secure"
+        private const val DEBUG_PLAIN_PREF_NAME = "UNUtripSession_debug_plain"
+        private const val TAG = "SessionManager"
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_USER = "user_data"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
@@ -40,18 +44,27 @@ class SessionManager private constructor(context: Context) {
 
     private fun createEncryptedPrefs(context: Context): SharedPreferences {
         synchronized(lock) {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            return try {
+                val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
 
-            val encrypted = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREF_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
+                val encrypted = EncryptedSharedPreferences.create(
+                    ENCRYPTED_PREF_NAME,
+                    masterKeyAlias,
+                    context,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
 
-            migrateLegacyIfNeeded(context, encrypted)
-            return encrypted
+                migrateLegacyIfNeeded(context, encrypted)
+                encrypted
+            } catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "Encrypted prefs unavailable; using debug plain prefs", e)
+                    context.getSharedPreferences(DEBUG_PLAIN_PREF_NAME, Context.MODE_PRIVATE)
+                } else {
+                    throw e
+                }
+            }
         }
     }
 

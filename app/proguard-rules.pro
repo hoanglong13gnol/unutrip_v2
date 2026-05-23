@@ -41,11 +41,6 @@
 -keep class org.osmdroid.** { *; }
 -dontwarn org.osmdroid.**
 
-# Google AI (Generative)
--keep class com.google.ai.** { *; }
--keep class com.google.common.** { *; }
--dontwarn com.google.j2objc.annotations.**
-
 # EncryptedSharedPreferences / Tink
 -keep class androidx.security.crypto.** { *; }
 -dontwarn com.google.crypto.tink.**

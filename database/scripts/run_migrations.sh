@@ -21,6 +21,7 @@ REPO_DATABASE="$(cd "$SCRIPT_DIR/.." && pwd)"
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-$REPO_DATABASE/migrations}"
 LEGACY_SQL="${LEGACY_SQL:-$REPO_DATABASE/../backend/nodejs/database.sql}"
 SKIP_VALIDATION="${SKIP_MIGRATION_VALIDATION:-false}"
+QUICK_POPULATE_SQL="${QUICK_POPULATE_SQL:-$REPO_DATABASE/quick_populate_app_places_from_legacy_database_sql.sql}"
 
 mysql_cmd() {
   export MYSQL_PWD="$MYSQL_PASSWORD"
@@ -42,6 +43,65 @@ table_exists() {
   local table="$1"
   mysql_cmd -Nse \
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='${table}'"
+}
+
+column_exists() {
+  local table="$1"
+  local column="$2"
+  mysql_cmd -Nse \
+    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='${DB_NAME}' AND table_name='${table}' AND column_name='${column}'"
+}
+
+row_count() {
+  local table="$1"
+  mysql_cmd -Nse "SELECT COUNT(*) FROM \`${table}\`"
+}
+
+migration_applied() {
+  local filename="$1"
+  mysql_cmd -Nse \
+    "SELECT COUNT(*) FROM schema_migrations WHERE filename='${filename}'"
+}
+
+record_migration() {
+  local filename="$1"
+  mysql_cmd -e "INSERT IGNORE INTO schema_migrations (filename) VALUES ('${filename}')"
+}
+
+ensure_schema_migrations_table() {
+  if [[ "$(table_exists schema_migrations)" != "0" ]]; then
+    return 0
+  fi
+  local bootstrap="$MIGRATIONS_DIR/012_schema_migrations.sql"
+  if [[ ! -f "$bootstrap" ]]; then
+    echo "WARNING: schema_migrations missing and $bootstrap not found; tracking disabled" >&2
+    return 0
+  fi
+  echo "+ bootstrap schema_migrations"
+  run_sql_file "$bootstrap"
+  record_migration "012_schema_migrations.sql"
+}
+
+# Full v2 data migrations (006–009) need extended legacy schema or rag_places.
+destinations_is_v2_ready() {
+  if [[ "$(table_exists destinations)" == "0" ]]; then
+    return 1
+  fi
+  if [[ "$(column_exists destinations short_description)" != "0" ]] \
+    && [[ "$(column_exists destinations rag_place_id)" != "0" ]]; then
+    return 0
+  fi
+  if [[ "$(table_exists rag_places)" != "0" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+itinerary_items_fk_target() {
+  mysql_cmd -Nse \
+    "SELECT REFERENCED_TABLE_NAME FROM information_schema.KEY_COLUMN_USAGE \
+     WHERE TABLE_SCHEMA='${DB_NAME}' AND TABLE_NAME='itinerary_items' \
+       AND COLUMN_NAME='destination_id' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1"
 }
 
 run_sql_file() {
@@ -69,23 +129,55 @@ if [[ ${#files[@]} -eq 0 ]]; then
   exit 1
 fi
 
+ensure_schema_migrations_table
+
 for file in "${files[@]}"; do
   base="$(basename "$file")"
+  if [[ "$(table_exists schema_migrations)" != "0" ]] && [[ "$(migration_applied "$base")" != "0" ]]; then
+    echo "= skip (already applied): $base"
+    continue
+  fi
   case "$base" in
     006_*|007_*|008_*|009_*)
       if [[ "$(table_exists destinations)" == "0" ]]; then
         echo "~ skip $base (no legacy \`destinations\`)"
         continue
       fi
+      if ! destinations_is_v2_ready; then
+        echo "~ skip $base (minimal legacy \`destinations\` schema)"
+        continue
+      fi
       ;;
     010_*)
-      if [[ "$SKIP_VALIDATION" == "true" ]] || [[ "$(table_exists destinations)" == "0" ]]; then
-        echo "~ skip $base (validation needs legacy tables)"
+      if [[ "$SKIP_VALIDATION" == "true" ]] || [[ "$(table_exists destinations)" == "0" ]] || ! destinations_is_v2_ready; then
+        echo "~ skip $base (validation needs v2 legacy tables)"
         continue
+      fi
+      ;;
+    011_*)
+      if [[ "$(table_exists itinerary_items)" != "0" ]]; then
+        fk_target="$(itinerary_items_fk_target)"
+        if [[ "$fk_target" == "destinations" ]]; then
+          echo "WARNING: itinerary_items.destination_id FK -> destinations (legacy); skip $base"
+          continue
+        fi
       fi
       ;;
   esac
   run_sql_file "$file"
+  if [[ "$(table_exists schema_migrations)" != "0" ]]; then
+    record_migration "$base"
+  fi
 done
+
+if [[ "$(table_exists destinations)" != "0" ]] \
+  && [[ "$(row_count destinations)" != "0" ]] \
+  && [[ "$(table_exists app_places)" != "0" ]] \
+  && [[ "$(row_count app_places)" == "0" ]] \
+  && ! destinations_is_v2_ready \
+  && [[ -f "$QUICK_POPULATE_SQL" ]]; then
+  echo "+ quick populate app_places from legacy destinations"
+  run_sql_file "$QUICK_POPULATE_SQL"
+fi
 
 echo "OK migrations applied to ${DB_NAME} on ${MYSQL_HOST}"

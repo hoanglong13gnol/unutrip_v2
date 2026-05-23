@@ -37,8 +37,13 @@ describe("POST /api/ai/rag-chat", () => {
     vi.unstubAllGlobals();
   });
 
-  it("returns 401 without Authorization", async () => {
-    await request(createApp()).post("/api/ai/rag-chat").send({ message: "hello" }).expect(401);
+  it("returns 200 for guest without Authorization (optionalAuth)", async () => {
+    const res = await request(createApp())
+      .post("/api/ai/rag-chat")
+      .send({ message: "hello" })
+      .expect(200);
+    expect(res.body.success).toBe(true);
+    expect(typeof res.body.answer).toBe("string");
   });
 
   it("returns 200 and normalized answer when JWT is valid", async () => {

@@ -1,5 +1,7 @@
 # Retrieval pipeline (Phase 5)
 
+**Related:** [`RAG_ARCHITECTURE.md`](../../docs/v2/RAG_ARCHITECTURE.md) · [`ARTIFACT_POLICY.md`](ARTIFACT_POLICY.md)
+
 ## Stages
 
 1. **Intent** — `IntentParser` (province, interests, constraints).

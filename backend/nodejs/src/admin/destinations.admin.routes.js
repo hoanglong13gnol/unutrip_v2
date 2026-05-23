@@ -10,6 +10,7 @@
 import * as destinationsRepository from "../repositories/destinations.repository.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml } from "./_shared/escape.js";
+import { adminErrorMessage } from "./_shared/adminErrors.js";
 import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 import { normalizeAppPlaceCategory } from "./_shared/categories.js";
 
@@ -65,7 +66,7 @@ export function registerDestinationsAdminRoutes(router) {
       });
       res.send(renderLayout(content, "destinations", "Quản lý Địa điểm", cspNonce, layoutFromRequest(req)));
     } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).send(adminErrorMessage(e));
     }
   });
 
@@ -79,7 +80,7 @@ export function registerDestinationsAdminRoutes(router) {
       if (!dest) return res.status(404).json({ success: false, message: "Không tìm thấy địa điểm" });
       return res.json(dest);
     } catch (e) {
-      return res.status(500).json({ success: false, message: e.message });
+      return res.status(500).json({ success: false, message: adminErrorMessage(e) });
     }
   });
 
@@ -164,7 +165,7 @@ export function registerDestinationsAdminRoutes(router) {
       });
       return res.json({ success: true, id: newId });
     } catch (e) {
-      return res.status(500).json({ success: false, message: e.message });
+      return res.status(500).json({ success: false, message: adminErrorMessage(e) });
     }
   });
 
@@ -179,7 +180,7 @@ export function registerDestinationsAdminRoutes(router) {
     } catch (e) {
       return res.status(500).json({
         success: false,
-        message: e.message || "Không xóa được (kiểm tra ràng buộc CSDL hoặc bản ghi liên quan)."
+        message: adminErrorMessage(e, "Không xóa được (kiểm tra ràng buộc CSDL hoặc bản ghi liên quan).")
       });
     }
   });

@@ -54,10 +54,12 @@ services:
       SKIP_MIGRATION_VALIDATION: ${SKIP_MIGRATION_VALIDATION:-false}
       MIGRATIONS_DIR: /migrations
       LEGACY_SQL: /legacy/database.sql
+      QUICK_POPULATE_SQL: /quick_populate.sql
     volumes:
       - ./database/migrations:/migrations:ro
       - ./database/scripts/run_migrations.sh:/run_migrations.sh:ro
       - ./backend/nodejs/database.sql:/legacy/database.sql:ro
+      - ./database/quick_populate_app_places_from_legacy_database_sql.sql:/quick_populate.sql:ro
     command: ["bash", "/run_migrations.sh"]
     restart: "no"
 
@@ -99,7 +101,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health').read()\""
+          "python -c \"import urllib.request; r=urllib.request.urlopen('http://127.0.0.1:8001/health/ready'); exit(0 if r.status==200 else 1)\""
         ]
       interval: 15s
       timeout: 5s
@@ -140,7 +142,7 @@ services:
       mysql:
         condition: service_healthy
       rag:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test:
         [

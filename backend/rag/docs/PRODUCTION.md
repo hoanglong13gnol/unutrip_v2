@@ -1,5 +1,7 @@
 # Production hardening (Phase 6)
 
+**Related:** [`DEPLOY_CHECKLIST.md`](DEPLOY_CHECKLIST.md) · [`../../docs/v2/RAG_ARCHITECTURE.md`](../../docs/v2/RAG_ARCHITECTURE.md) · [`../../../deploy/README.md`](../../../deploy/README.md)
+
 ## Environment
 
 Set on **both** Node and FastAPI RAG:

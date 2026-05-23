@@ -24,8 +24,6 @@ def system_overview(pipeline: RagPipeline) -> dict[str, Any]:
         "runtime": {
             "runtime_mode": settings.ai_runtime_mode,
             "enable_gemini": settings.enable_gemini,
-            "enable_lora": settings.enable_lora,
-            "enable_validator": settings.enable_validator,
             "gemini_model": settings.gemini_model if settings.enable_gemini else None,
             "gemini_configured": bool(settings.gemini_api_key),
         },

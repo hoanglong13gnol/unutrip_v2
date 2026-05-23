@@ -20,7 +20,9 @@ class RagRateLimitMiddleware(BaseHTTPMiddleware):
         self.per_minute = per_minute
         self._hits: dict[str, deque[float]] = defaultdict(deque)
 
-    def _is_rate_limited_path(self, path: str) -> bool:
+    def _is_rate_limited_path(self, path: str, method: str) -> bool:
+        if path in {"/chat", "/v1/chat"} and method == "POST":
+            return True
         if path.startswith("/rag/"):
             return True
         if path.startswith("/v1/rag/"):
@@ -52,7 +54,7 @@ class RagRateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         path = request.url.path
-        if not self._is_rate_limited_path(path):
+        if not self._is_rate_limited_path(path, request.method):
             return await call_next(request)
 
         ip = request.client.host if request.client else "unknown"

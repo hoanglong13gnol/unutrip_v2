@@ -2,105 +2,123 @@
 
 ## Strategy
 
-Use the strangler pattern:
+Strangler pattern: giữ endpoint + contract Android; thay internals từng lớp; parity test sau mỗi phase.
 
-- Keep existing endpoints and Android contract stable.
-- Replace internals progressively behind repository/service layers.
-- Migrate one read/write concern at a time with parity checks.
+**Lưu ý đặt tên:** *Phase 7* trong tài liệu parity ([`PHASE7_NODE_ANDROID_PARITY.md`](PHASE7_NODE_ANDROID_PARITY.md)) = place tables + contract E2E.  
+*Phase 7* bên dưới (admin shell) = refactor admin — **hai mục khác nhau**.
 
-## Cross-phase safeguards
+---
 
-- No full rewrite in one batch.
-- Contract/smoke checks after each phase.
-- Ability to pause/rollback per module path.
-- Prefer feature-flagged switches for data-source cutover where helpful.
+## Trạng thái tổng quan
 
-## Phase 1 - Backend repository/service extraction (legacy behavior unchanged)
+| Phase | Mô tả | Trạng thái |
+|-------|--------|------------|
+| 1 | Repository/service extraction | ✅ Done |
+| 2 | Read paths → `app_places` / `place_images` | ✅ Done |
+| 3 | `place_id_map` resolution | ✅ Done |
+| 4 | Review aggregates → `app_places` | ✅ Done |
+| 5 | RAG export/index từ `rag_knowledge_base` | ✅ Done (artifact pipeline + jobs) |
+| 6 | Node↔RAG contract + itinerary parity tests | ✅ Mostly (Zod/Pydantic fixtures; E2E smoke manual) |
+| 7 | Admin modular shell | ✅ Done (`admin/*.admin.routes.js`) |
+| 8 | Android polish (DI, test, tách fragment) | ⏳ Open |
 
-- Extract inline SQL from routes/helpers into repositories.
-- Introduce services for workflow orchestration.
-- Keep current legacy table usage and output behavior unchanged.
+---
 
-Exit criteria:
+## Phase 1 — Backend repository/service extraction
 
-- No API contract changes.
-- Route tests/smoke checks remain green.
+**Mục tiêu:** SQL ra khỏi routes; services orchestrate.
 
-## Phase 2 - Switch place/image read paths to v2 DB tables
+**Exit criteria:** ✅ API contract unchanged; Vitest smoke green (trừ known failures cần fix).
 
-- Move place reads from `destinations` to `app_places`.
-- Move image reads from `destination_images` to `place_images`.
-- Keep DTO/output shape unchanged.
+**Hiện trạng:** `modules/*`, `services/*`, `repositories/*`, `shared/dto/*` đã có.
 
-Exit criteria:
+---
 
-- `/destinations`, featured, nearby, detail parity checks pass.
-- Image behavior parity checks pass.
+## Phase 2 — Place/image read paths → v2 tables
 
-## Phase 3 - Switch rawPlaceId resolution to `place_id_map`
+**Mục tiêu:**
 
-- Replace `rag_places.place_id -> destination_id` runtime mapping in Node persistence flows.
-- Ensure unresolved-id handling remains explicit and safe.
+- `destinations` → `app_places`
+- `destination_images` → `place_images`
 
-Exit criteria:
+**Exit criteria:** ✅ `/destinations`, featured, nearby, detail dùng `app_places`; DTO không đổi.
 
-- AI itinerary save paths resolve ids with equal or better success rate.
-- No orphan itinerary item writes.
+---
 
-## Phase 4 - Switch review aggregate target to `app_places`
+## Phase 3 — rawPlaceId → `place_id_map`
 
-- Keep aggregate source from `reviews`.
-- Update aggregate write target from legacy place table to `app_places`.
+**Mục tiêu:** Thay mapping `rag_places` runtime bằng `place_id_map` + flags.
 
-Exit criteria:
+**Exit criteria:** ✅ `placeIdMap.repository.js`, `USE_V2_PLACE_TABLES`, tests `placeIdMap.service.test.js`.
 
-- Rating/reviewCount parity checks pass.
-- Android-visible rating behavior unchanged.
+---
 
-## Phase 5 - RAG export/index build from `rag_knowledge_base`
+## Phase 4 — Review aggregates → `app_places`
 
-- Export canonical corpus from `rag_knowledge_base`.
-- Build BM25/vector artifacts from exported corpus.
-- Keep runtime retrieval artifact-driven (no direct DB runtime read yet).
+**Mục tiêu:** `UPDATE app_places SET rating, review_count`.
 
-Exit criteria:
+**Exit criteria:** ✅ `reviews.repository.js` join/update `app_places`.
 
-- RAG route parity and retrieval quality checks pass.
-- Runtime readiness/index build checks pass.
+---
 
-## Phase 6 - AI itinerary and chatbot parity tests
+## Phase 5 — RAG corpus từ `rag_knowledge_base`
 
-- Verify Node↔RAG integration contracts.
-- Validate suggestion quality/coverage and fallback behavior.
-- Confirm itinerary save flow correctness with id resolution.
+**Mục tiêu:** Export JSONL → build BM25 (+ optional embeddings); runtime từ artifacts.
 
-Exit criteria:
+**Exit criteria:** ✅ `jobs/build_rag_artifacts.py`, manifest, verify script, CI fixture build.
 
-- Functional parity accepted for chat + itinerary generation workflows.
+---
 
-## Phase 7 - Admin cleanup
+## Phase 6 — AI chat + itinerary parity
 
-- Refactor admin monolith into module-aligned structure.
-- Decide admin migration scope to v2 sources for this release window.
+**Mục tiêu:** Contract Node↔RAG; save flow resolve id an toàn.
 
-Exit criteria:
+**Exit criteria:**
 
-- Admin critical functions preserved.
-- No impact on Android API contract.
+- ✅ `docs/v2/fixtures/rag_chat_simple_sample.json`
+- ✅ `ragContractParity.test.js`, `tests/contracts/`
+- ⏳ Full staging E2E automated trong CI (`stack-smoke` workflow — chưa có)
 
-## Phase 8 - Android polish after API stability
+---
 
-- Only after backend contract stability is confirmed.
-- Android-side cleanup/tuning for any non-breaking improvements.
+## Phase 7 — Admin cleanup (Node admin shell)
 
-Exit criteria:
+**Mục tiêu:** Tách monolith `admin.js` (~2000 dòng) thành module routes.
 
-- End-to-end user flows remain stable in staging/production-like environments.
+**Exit criteria:** ✅ `admin/index.js` + per-section routes; behavior giữ nguyên.
 
-## Open questions
+**Parity Phase 7 (place tables):** xem [`PHASE7_NODE_ANDROID_PARITY.md`](PHASE7_NODE_ANDROID_PARITY.md).
 
-- Should Node call `AI_MODEL_URL` directly, or use FastAPI RAG as the single AI gateway?
-- Is a backend feature flag such as `USE_V2_PLACE_TABLES` required for controlled rollout?
-- Should admin migration be in this release scope or deferred?
-- Should RAG remain index-artifact runtime long term, or later adopt DB-backed online retrieval?
+---
 
+## Phase 8 — Android polish (sau API ổn định)
+
+**Mục tiêu:**
+
+- Hilt/Koin DI; OkHttp Bearer interceptor + 401 handler
+- Test ViewModel/Repository (MockWebServer)
+- Tách god fragments (`ItineraryDetailFragment` chứa `AISuggestFragment`)
+- Xóa `GEMINI_API_KEY` khỏi `build.gradle` (AI chỉ qua Node)
+- Wire hoặc gỡ legacy `AISuggestFragment` (nav dead)
+
+**Exit criteria:** ⏳ `testDevDebugUnitTest` + ≥1 instrumented smoke; không fragment >400 dòng.
+
+---
+
+## Open questions (cập nhật 2026-05)
+
+| Câu hỏi | Trạng thái |
+|---------|------------|
+| Node gọi `AI_MODEL_URL` hay chỉ RAG? | RAG là gateway chính; `AI_MODEL_URL` optional fallback `/ai/chat` |
+| `USE_V2_PLACE_TABLES` rollout? | ✅ Compose `true`; local XAMPP legacy vẫn `false` |
+| Admin migration data source? | Admin CRUD dùng `app_places`; legacy bootstrap SQL vẫn tồn tại |
+| RAG artifact vs DB online retrieval? | Artifact-first; DB online retrieval deferred |
+
+---
+
+## Cross-phase safeguards (luôn áp dụng)
+
+- Không rewrite một lần toàn bộ module.
+- Contract test sau thay đổi API shape.
+- Feature flag cho cutover DB khi cần.
+- Cập nhật [`AGENT_GUIDE.md`](AGENT_GUIDE.md) khi đóng phase.

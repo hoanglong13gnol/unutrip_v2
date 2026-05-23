@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import * as usersRepository from "../repositories/users.repository.js";
 import { fillAdminTemplate, loadAdminTemplate, scriptNonceAttr } from "./_shared/adminTemplate.js";
 import { escapeHtml } from "./_shared/escape.js";
+import { adminErrorMessage } from "./_shared/adminErrors.js";
 import { renderLayout, layoutFromRequest } from "./_shared/layout.js";
 
 export function registerUsersAdminRoutes(router) {
@@ -61,7 +62,7 @@ export function registerUsersAdminRoutes(router) {
       });
       res.send(renderLayout(content, "users", "Quản lý Người dùng", cspNonce, layoutFromRequest(req)));
     } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).send(adminErrorMessage(e));
     }
   });
 
@@ -75,7 +76,7 @@ export function registerUsersAdminRoutes(router) {
       if (!user) return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
       return res.json(user);
     } catch (e) {
-      return res.status(500).json({ success: false, message: e.message });
+      return res.status(500).json({ success: false, message: adminErrorMessage(e) });
     }
   });
 
@@ -112,8 +113,8 @@ export function registerUsersAdminRoutes(router) {
       if (Number.isFinite(idNum) && idNum > 0) {
         let passwordHash = null;
         if (password) {
-          if (password.length < 4) {
-            return res.status(400).json({ success: false, message: "Mật khẩu mới phải có ít nhất 4 ký tự" });
+          if (password.length < 8) {
+            return res.status(400).json({ success: false, message: "Mật khẩu mới phải có ít nhất 8 ký tự" });
           }
           passwordHash = bcrypt.hashSync(password, 10);
         }
@@ -121,17 +122,17 @@ export function registerUsersAdminRoutes(router) {
         return res.json({ success: true });
       }
 
-      if (!password || password.length < 4) {
+      if (!password || password.length < 8) {
         return res.status(400).json({
           success: false,
-          message: "Mật khẩu bắt buộc khi tạo mới và phải có ít nhất 4 ký tự"
+          message: "Mật khẩu bắt buộc khi tạo mới và phải có ít nhất 8 ký tự"
         });
       }
       const passwordHash = bcrypt.hashSync(password, 10);
       await usersRepository.adminPersistUserSave({ idNum, fullName, email, phone, passwordHash });
       return res.json({ success: true });
     } catch (e) {
-      return res.status(500).json({ success: false, message: e.message });
+      return res.status(500).json({ success: false, message: adminErrorMessage(e) });
     }
   });
 
@@ -146,7 +147,7 @@ export function registerUsersAdminRoutes(router) {
     } catch (e) {
       return res.status(500).json({
         success: false,
-        message: e.message || "Không xóa được (kiểm tra ràng buộc CSDL)."
+        message: adminErrorMessage(e, "Không xóa được (kiểm tra ràng buộc CSDL).")
       });
     }
   });

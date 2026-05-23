@@ -1,5 +1,5 @@
 import { authMiddleware } from "../../auth.js";
-import { upload } from "../../shared/http/upload.js";
+import { upload, validateUploadedImageFiles } from "../../shared/http/upload.js";
 import {
   getProfile,
   getStats,
@@ -13,5 +13,5 @@ export function registerUserRoutes(router) {
   router.get("/users/stats", authMiddleware, getStats);
   router.put("/users/profile", authMiddleware, updateProfile);
   router.put("/users/preferences", authMiddleware, updatePreferences);
-  router.post("/users/avatar", authMiddleware, upload.single("avatar"), uploadAvatar);
+  router.post("/users/avatar", authMiddleware, upload.single("avatar"), validateUploadedImageFiles, uploadAvatar);
 }

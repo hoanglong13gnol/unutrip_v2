@@ -24,7 +24,7 @@ class BM25Retriever:
         if not self.index_file.exists():
             raise FileNotFoundError(
                 f"BM25 index not found: {self.index_file}. "
-                "Run scripts\\06_build_bm25_index.py or jobs\\build_rag_artifacts.py first."
+                "Run scripts/06_build_bm25_index.py or jobs/build_rag_artifacts.py first."
             )
 
         with self.index_file.open("rb") as f:

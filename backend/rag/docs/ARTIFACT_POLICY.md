@@ -1,5 +1,7 @@
 # RAG artifact policy (Phase 4)
 
+**Related:** [`../../docs/v2/RAG_ARCHITECTURE.md`](../../docs/v2/RAG_ARCHITECTURE.md) · [`DEPLOY_CHECKLIST.md`](DEPLOY_CHECKLIST.md)
+
 ## What is tracked in git
 
 | Path | In git? | Notes |
