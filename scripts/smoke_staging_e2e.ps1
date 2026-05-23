@@ -20,6 +20,15 @@ Ok "Node /api/health"
 try { Invoke-WebRequest -Uri "$NodeBase/api/health/ready" -UseBasicParsing | Out-Null } catch { Fail "Node /api/health/ready" }
 Ok "Node /api/health/ready"
 
+try {
+    $dest = Invoke-RestMethod -Uri "$NodeBase/api/destinations?limit=1" -UseBasicParsing
+    $total = [int]$dest.total
+    if ($total -gt 0) { Ok "Node destinations total=$total" }
+    else { Write-Host "WARN: app_places empty or list failed (total=$total)" }
+} catch {
+    Write-Host "WARN: could not fetch destinations list"
+}
+
 if ($RagKey) {
     $body = '{"message":"diem tham quan Ha Giang","top_k":3}'
     $headers = @{

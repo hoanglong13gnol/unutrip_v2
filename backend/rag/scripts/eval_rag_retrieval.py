@@ -14,10 +14,12 @@ import json
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from core.config import settings
 from retrieval.hybrid_retriever import HybridRetriever
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def hit_at_k(relevant: set[str], ranked_ids: list[str], k: int) -> float:

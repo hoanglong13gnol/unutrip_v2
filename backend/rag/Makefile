@@ -1,4 +1,4 @@
-.PHONY: clean install install-dev lint typecheck test test-fast quality fetch-artifacts package-artifacts
+.PHONY: clean install install-dev lint typecheck test test-fast quality fetch-artifacts package-artifacts eval-golden-ci eval-golden-full
 
 clean:
 	python scripts/clean_dev_artifacts.py
@@ -32,3 +32,11 @@ fetch-artifacts:
 
 package-artifacts:
 	python jobs/package_rag_artifacts.py
+
+eval-golden-ci:
+	python scripts/eval_rag_retrieval.py --golden eval/golden_queries_ci.json --ci \
+	  --require-labels --min-hit-at5 0.5 --min-province-accuracy 1.0
+
+eval-golden-full:
+	python scripts/eval_rag_retrieval.py --golden eval/golden_queries.json --ci \
+	  --min-province-accuracy 1.0 --min-hit-at5 0.75

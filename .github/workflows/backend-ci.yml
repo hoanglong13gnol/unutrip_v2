@@ -95,3 +95,7 @@ jobs:
         run: |
           count=$(mysql -h127.0.0.1 -P3306 -uunutrip -punutrip_pass unudata -Nse "SELECT COUNT(*) FROM app_places")
           test "$count" -gt 0
+      - name: Assert schema_migrations tracking
+        run: |
+          mysql -h127.0.0.1 -P3306 -uunutrip -punutrip_pass unudata -Nse \
+            "SELECT COUNT(*) FROM schema_migrations WHERE filename='012_schema_migrations.sql'" | grep -qx 1

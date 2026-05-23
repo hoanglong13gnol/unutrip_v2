@@ -377,6 +377,19 @@ curl -sf http://localhost:3000/api/health/ready
 | 5 | Chạy `eval/golden_queries.json` (full) — hit@5 ≥0.75, province accuracy 1.0 |
 | 6 | Optional: `--with-embeddings`, bật `RAG_ENABLE_VECTOR=true` staging |
 
+**One-shot (khi có DB staging):**
+
+```bash
+# Bash (Linux / Git Bash)
+export DB_HOST=... DB_USER=... DB_PASSWORD=... DB_NAME=unudata
+bash scripts/build_rag_staging_corpus.sh
+
+# PowerShell (PC / laptop)
+powershell -ExecutionPolicy Bypass -File .\scripts\build_rag_staging_corpus.ps1
+
+# Tuỳ chọn: PACKAGE=1 hoặc -Package ; MIN_RAG_DOCS=500 (mặc định)
+```
+
 **Acceptance:** `document_count` ≥ **500** (hoặc số thật của KB); `/admin/rag/status` ổn.
 
 ---
@@ -531,7 +544,7 @@ bash scripts/smoke_staging_e2e.sh
 **Verify PC (không Docker):**
 ```bash
 cd backend/rag && python -m pytest tests/ -q    # 138 pass
-cd backend/nodejs && npm test && npm run lint   # 60 pass
+cd backend/nodejs && npm test && npm run lint   # 76 pass
 ```
 
 ## 8.2 Phase B — IN PROGRESS (B4 CI + B5 tests)
@@ -545,7 +558,7 @@ cd backend/nodejs && npm test && npm run lint   # 60 pass
 
 **Verify Node (PC agent):**
 ```bash
-cd backend/nodejs && npm test && npm run lint   # 60 pass (2026-05-23, sau D3 split)
+cd backend/nodejs && npm test && npm run lint   # 76 pass (2026-05-23)
 ```
 
 ## 8.3 Phase C — DONE (2026-05-23)
@@ -566,10 +579,10 @@ cd backend/nodejs && npm test && npm run lint   # 60 pass (2026-05-23, sau D3 sp
 
 | ID | Trạng thái | Chi tiết |
 |----|------------|----------|
-| D1 | ⏸️ | Corpus staging ≥500 docs + golden eval — cần DB/staging thật, không chạy trên agent PC |
+| D1 | 🔄 prep ✅ | Script `scripts/build_rag_staging_corpus.{sh,ps1}` + Makefile `eval-golden-full`; **chạy thật** cần DB ≥500 docs |
 | D2 | ✅ | Gỡ `enable_lora` / `enable_validator` khỏi `config.py`, `/runtime/status`, admin overview; sửa message `bm25_retriever.py` |
 | D3 | ✅ | Tách `ai.schemas.js` + handlers; `itineraryCrud` / `itineraryAiCreate` / `itineraryAiPersist`; `dashboard.service.js` |
-| D4 | ✅ | `012_schema_migrations.sql` + `run_migrations.sh` skip/record applied |
+| D4 | ✅ | `012_schema_migrations.sql` + `run_migrations.sh` skip/record applied; CI assert migration 012 applied |
 | D5 | ✅ | `docker-compose.prod.yml`, `deploy/nginx/unutrip.conf.example`, `.env.example` cleanup |
 
 ## 8.5 Kiến trúc nhắc lại (không phá)

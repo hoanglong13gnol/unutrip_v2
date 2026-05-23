@@ -21,6 +21,13 @@ ok "Node /api/health"
 curl -sf "$NODE_BASE/api/health/ready" >/dev/null || fail "Node /api/health/ready"
 ok "Node /api/health/ready"
 
+dest_count=$(curl -sf "$NODE_BASE/api/destinations?limit=1" | python -c "import json,sys; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo 0)
+if [[ "${dest_count:-0}" -gt 0 ]]; then
+  ok "Node destinations total=$dest_count"
+else
+  echo "WARN: app_places empty or list failed (total=$dest_count)"
+fi
+
 if [[ -n "$RAG_KEY" ]]; then
   code=$(curl -s -o /dev/null -w "%{http_code}" \
     -H "X-RAG-Internal-Key: $RAG_KEY" \
