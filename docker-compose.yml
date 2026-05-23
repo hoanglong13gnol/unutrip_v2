@@ -60,7 +60,7 @@ services:
       - ./database/scripts/run_migrations.sh:/run_migrations.sh:ro
       - ./backend/nodejs/database.sql:/legacy/database.sql:ro
       - ./database/quick_populate_app_places_from_legacy_database_sql.sql:/quick_populate.sql:ro
-    command: ["bash", "-c", "sed -i 's/\\r$//' /run_migrations.sh && bash /run_migrations.sh"]
+    command: ["bash", "-c", "sed 's/\\r$//' /run_migrations.sh | bash"]
     restart: "no"
 
   redis:
