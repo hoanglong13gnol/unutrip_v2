@@ -27,7 +27,8 @@ RUN test -f scripts/docker_entrypoint.sh \
     && test -f tests/fixtures/rag_corpus_sample.jsonl \
     && sed -i 's/\r$//' scripts/*.sh \
     && chmod +x scripts/docker_entrypoint.sh \
-    && pip install --no-cache-dir --no-deps -e .
+    && PYTHONPATH=/svc python jobs/build_rag_artifacts.py --from-fixture \
+    && test -f data/indexes/bm25_index.pkl
 
 EXPOSE 8001
 
