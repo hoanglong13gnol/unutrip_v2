@@ -502,7 +502,7 @@ bash scripts/smoke_staging_e2e.sh
 |----|------------|----------|
 | A1.1 | ✅ | `test_rag_pipeline_unit.py`: `province_norm_override=None` trong assert |
 | A1.2 | ✅ | Node 60/60: `adminAuth` stub env + `ALLOW_ADMIN_OPEN`; `env.v2PlaceFlags` mock dotenv; `ai-rag-chat` guest 200 |
-| A2 | ⏸️ code ✅ verify ⏸️ | `run_migrations.sh` skip 006–009 legacy + quick populate; RAG Dockerfile `--from-fixture`; compose `rag` health `/health/ready` |
+| A2 | ⏸️ code ✅ verify ⏸️ | `run_migrations.sh` skip 006–009 legacy + quick populate; RAG Dockerfile `--from-fixture`; compose `rag` health `/health/ready`; **2026-05-23 fix:** `build_rag_artifacts.py` in-process import (không subprocess) + `core/__init__.py` — chờ laptop `docker compose build rag` |
 | A3 | ✅ | Xóa `[NEARBY]`, AI raw log; `RetrofitClient` error body chỉ DEBUG |
 
 **Verify PC (không Docker):**

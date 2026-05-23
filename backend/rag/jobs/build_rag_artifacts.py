@@ -11,22 +11,44 @@ Usage (from backend/rag with .env DB_* if using --from-db):
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
-import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
-def run(cmd: list[str]) -> None:
-    print("+", " ".join(cmd))
-    env = os.environ.copy()
-    root = str(ROOT)
-    existing = env.get("PYTHONPATH", "")
-    if root not in existing.split(os.pathsep):
-        env["PYTHONPATH"] = root if not existing else f"{root}{os.pathsep}{existing}"
-    subprocess.check_call(cmd, cwd=root, env=env)
+def _load_module(relative_path: str):
+    path = ROOT / relative_path
+    spec = importlib.util.spec_from_file_location(f"unutrip_build_{path.stem}", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load script: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def run_script(relative_path: str, runner: Callable[..., None] | None = None) -> None:
+    """Load a build script in-process (avoids subprocess PYTHONPATH issues in Docker)."""
+    path = ROOT / relative_path
+    print("+", path)
+    module = _load_module(relative_path)
+    if runner is not None:
+        runner(module)
+        return
+    main = getattr(module, "main", None)
+    if not callable(main):
+        raise RuntimeError(f"Script has no main(): {path}")
+    argv_backup = sys.argv[:]
+    sys.argv = [str(path)]
+    try:
+        main()
+    finally:
+        sys.argv = argv_backup
 
 
 def main() -> None:
@@ -58,29 +80,25 @@ def main() -> None:
     if args.from_db and args.from_fixture:
         ap.error("Use only one of --from-db or --from-fixture")
 
-    py = sys.executable
-
     if args.from_fixture and not args.skip_export:
-        run([py, str(ROOT / "scripts" / "sync_fixture_data.py")])
+        run_script("scripts/sync_fixture_data.py", lambda mod: mod.sync_fixture_data())
 
     if args.from_db and not args.skip_export:
-        run([py, str(ROOT / "scripts" / "export_rag_knowledge_base_to_corpus.py")])
+        run_script("scripts/export_rag_knowledge_base_to_corpus.py")
         if args.export_places:
-            run([py, str(ROOT / "scripts" / "export_app_places_to_json.py")])
+            run_script("scripts/export_app_places_to_json.py")
 
-    run([py, str(ROOT / "scripts" / "06_build_bm25_index.py")])
+    run_script("scripts/06_build_bm25_index.py")
 
     build_embeddings = args.with_embeddings
     if not args.skip_embeddings:
-        import os
-
         build_embeddings = build_embeddings or os.getenv("RAG_BUILD_EMBEDDINGS", "").strip().lower() in {
             "1",
             "true",
             "yes",
         }
     if build_embeddings and not args.skip_embeddings:
-        run([py, str(ROOT / "scripts" / "07_build_embedding_index.py")])
+        run_script("scripts/07_build_embedding_index.py")
 
 
 if __name__ == "__main__":
