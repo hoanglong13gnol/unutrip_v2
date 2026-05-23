@@ -23,7 +23,10 @@ COPY eval ./eval
 COPY data ./data
 COPY tests/fixtures/rag_corpus_sample.jsonl tests/fixtures/places_app_sample.json ./tests/fixtures/
 
-RUN test -f scripts/docker_entrypoint.sh \
+RUN test -d core \
+    && test -f core/__init__.py \
+    && python -c "import core.config; print('core import ok')" \
+    && test -f scripts/docker_entrypoint.sh \
     && test -f tests/fixtures/rag_corpus_sample.jsonl \
     && sed -i 's/\r$//' scripts/*.sh \
     && chmod +x scripts/docker_entrypoint.sh \

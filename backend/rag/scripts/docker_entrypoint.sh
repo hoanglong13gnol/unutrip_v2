@@ -4,7 +4,7 @@ cd /svc
 export PYTHONPATH=/svc
 
 if [ ! -f data/indexes/bm25_index.pkl ]; then
-  echo "+ BM25 index missing; building from fixture..."
+  echo "+ BM25 index missing; building from fixture (in-process)..."
   python jobs/build_rag_artifacts.py --from-fixture
 fi
 
