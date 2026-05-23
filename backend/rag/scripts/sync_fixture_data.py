@@ -6,12 +6,15 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core.config import settings
 from core.fixture_paths import FIXTURE_CORPUS, FIXTURE_PLACES_APP
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def sync_fixture_data(*, corpus_only: bool = False, places_only: bool = False) -> None:

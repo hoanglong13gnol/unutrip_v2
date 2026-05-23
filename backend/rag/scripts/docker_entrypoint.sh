@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 cd /svc
+export PYTHONPATH=/svc
 
 if [ ! -f data/indexes/bm25_index.pkl ]; then
   echo "+ BM25 index missing; building from fixture..."

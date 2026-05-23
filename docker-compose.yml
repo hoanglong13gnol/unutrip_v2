@@ -60,7 +60,7 @@ services:
       - ./database/scripts/run_migrations.sh:/run_migrations.sh:ro
       - ./backend/nodejs/database.sql:/legacy/database.sql:ro
       - ./database/quick_populate_app_places_from_legacy_database_sql.sql:/quick_populate.sql:ro
-    command: ["bash", "/run_migrations.sh"]
+    command: ["bash", "-c", "sed -i 's/\\r$//' /run_migrations.sh && bash /run_migrations.sh"]
     restart: "no"
 
   redis:
@@ -84,6 +84,7 @@ services:
       - .env
     environment:
       # Override host-specific defaults from .env when running inside Compose
+      PYTHONPATH: /svc
       REDIS_URL: redis://redis:6379/0
       RAG_CORS_ORIGINS: ${RAG_CORS_ORIGINS:-http://localhost:3000}
       RAG_INTERNAL_API_KEY: ${RAG_INTERNAL_API_KEY:-}

@@ -11,6 +11,7 @@ Usage (from backend/rag with .env DB_* if using --from-db):
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,7 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def run(cmd: list[str]) -> None:
     print("+", " ".join(cmd))
-    subprocess.check_call(cmd, cwd=str(ROOT))
+    env = os.environ.copy()
+    root = str(ROOT)
+    existing = env.get("PYTHONPATH", "")
+    if root not in existing.split(os.pathsep):
+        env["PYTHONPATH"] = root if not existing else f"{root}{os.pathsep}{existing}"
+    subprocess.check_call(cmd, cwd=root, env=env)
 
 
 def main() -> None:
