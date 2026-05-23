@@ -76,7 +76,7 @@ SELECT
   NULL AS `recommended_use`,
   COALESCE(NULLIF(TRIM(d.`tags_json`), ''), '[]') AS `tags_json`,
   NULL AS `primary_image_url`,
-  COALESCE(d.`rating`, 0) AS `rating`,
+  GREATEST(0, LEAST(ROUND(COALESCE(d.`rating`, 0), 2), 9.99)) AS `rating`,
   COALESCE(d.`review_count`, 0) AS `review_count`,
   1 AS `is_active`,
   CURRENT_TIMESTAMP AS `created_at`,

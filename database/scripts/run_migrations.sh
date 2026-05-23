@@ -16,8 +16,15 @@ MYSQL_USER="${MYSQL_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
 DB_NAME="${DB_NAME:-unudata}"
 BOOTSTRAP_LEGACY="${DATABASE_BOOTSTRAP_LEGACY:-false}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DATABASE="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  REPO_DATABASE="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [[ -n "${MIGRATIONS_DIR:-}" ]]; then
+  REPO_DATABASE="$(cd "$(dirname "$MIGRATIONS_DIR")" && pwd)"
+else
+  echo "ERROR: cannot resolve REPO_DATABASE (set MIGRATIONS_DIR or run from repo script path)" >&2
+  exit 1
+fi
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-$REPO_DATABASE/migrations}"
 LEGACY_SQL="${LEGACY_SQL:-$REPO_DATABASE/../backend/nodejs/database.sql}"
 SKIP_VALIDATION="${SKIP_MIGRATION_VALIDATION:-false}"
