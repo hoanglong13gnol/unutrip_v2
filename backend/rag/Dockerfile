@@ -17,9 +17,8 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir .
 
 COPY jobs scripts eval data ./
-COPY tests/fixtures ./tests/fixtures
-RUN test -f tests/fixtures/rag_corpus_sample.jsonl \
-    && test -f tests/fixtures/places_app_sample.json \
+COPY tests/fixtures/rag_corpus_sample.jsonl tests/fixtures/places_app_sample.json ./tests/fixtures/
+RUN ls -la tests/fixtures \
     && pip install --no-cache-dir --no-deps -e . \
     && chmod +x scripts/docker_entrypoint.sh
 

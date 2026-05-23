@@ -7,7 +7,16 @@ venv
 .env.*
 .git
 .gitignore
-tests/*
-!tests/fixtures/
-!tests/fixtures/**
+# Pytest tree (keep tests/fixtures for Docker BM25 bootstrap — do NOT ignore tests/ parent)
+tests/conftest.py
+tests/test_*.py
+tests/api
+tests/contracts
+tests/generation
+tests/llm
+tests/pipelines
+tests/providers
+tests/repositories
+tests/retrieval
+tests/services
 reports/**/*.log
