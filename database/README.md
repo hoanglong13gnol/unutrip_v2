@@ -81,6 +81,9 @@ bash database/scripts/run_migrations.sh
 **Quick bridge (dev):**  
 `quick_populate_app_places_from_legacy_database_sql.sql` — copy `destinations` → `app_places` khi đã import legacy SQL nhưng skip 006.
 
+**Seed fallback (Compose / empty `app_places`):**  
+`database/seeds/001_minimal_demo.sql` — 5 địa điểm demo (9001–9005); `run_migrations.sh` chạy khi bảng vẫn rỗng sau migrate.
+
 ---
 
 ## Local MySQL (XAMPP)

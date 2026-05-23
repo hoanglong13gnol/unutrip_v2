@@ -20,7 +20,7 @@ Strangler pattern: giữ endpoint + contract Android; thay internals từng lớ
 | 5 | RAG export/index từ `rag_knowledge_base` | ✅ Done (artifact pipeline + jobs) |
 | 6 | Node↔RAG contract + itinerary parity tests | ✅ Mostly (Zod/Pydantic fixtures; E2E smoke manual) |
 | 7 | Admin modular shell | ✅ Done (`admin/*.admin.routes.js`) |
-| 8 | Android polish (DI, test, tách fragment) | ⏳ Open |
+| 8 | Android polish (DI, test, tách fragment) | ✅ Done (Phase C roadmap) |
 
 ---
 

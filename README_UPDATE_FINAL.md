@@ -540,7 +540,7 @@ cd backend/nodejs && npm test && npm run lint   # 60 pass
 |----|------------|
 | B1–B3, B6 | ✅ | Admin XSS/auth, upload, rate limit, gỡ xlsx |
 | B4 | 🔄 | `stack-smoke.yml` + `backend-ci` mysql-migrate; fix trigger `master` (`d9caa42`) |
-| B5 | 🔄 | `itineraries.service.test.js`, `destinations.routes.test.js`, `reviews.routes.test.js` — **68** Vitest pass |
+| B5 | ✅ | `itineraries`, `destinations`, `reviews`, `favorites` (+ service) — **76** Vitest pass |
 | A2.3 | ✅ | `database/seeds/001_minimal_demo.sql` — fallback khi `app_places` rỗng sau migrate |
 
 **Verify Node (PC agent):**
