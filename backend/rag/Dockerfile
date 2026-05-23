@@ -1,4 +1,5 @@
-# Build from repository root: docker build -f backend/rag/Dockerfile backend/rag
+# syntax=docker/dockerfile:1
+# Build context: backend/rag (see root docker-compose.yml)
 FROM python:3.12-slim-bookworm
 
 WORKDIR /svc
@@ -16,11 +17,17 @@ RUN pip install --no-cache-dir --upgrade pip \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir .
 
-COPY jobs scripts eval data ./
+COPY jobs ./jobs
+COPY scripts ./scripts
+COPY eval ./eval
+COPY data ./data
 COPY tests/fixtures/rag_corpus_sample.jsonl tests/fixtures/places_app_sample.json ./tests/fixtures/
-RUN ls -la tests/fixtures \
-    && pip install --no-cache-dir --no-deps -e . \
-    && chmod +x scripts/docker_entrypoint.sh
+
+RUN test -f scripts/docker_entrypoint.sh \
+    && test -f tests/fixtures/rag_corpus_sample.jsonl \
+    && pip install --no-cache-dir --no-deps -e .
+
+COPY --chmod=755 scripts/docker_entrypoint.sh scripts/docker_entrypoint.sh
 
 EXPOSE 8001
 
