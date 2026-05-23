@@ -29,6 +29,7 @@ MIGRATIONS_DIR="${MIGRATIONS_DIR:-$REPO_DATABASE/migrations}"
 LEGACY_SQL="${LEGACY_SQL:-$REPO_DATABASE/../backend/nodejs/database.sql}"
 SKIP_VALIDATION="${SKIP_MIGRATION_VALIDATION:-false}"
 QUICK_POPULATE_SQL="${QUICK_POPULATE_SQL:-$REPO_DATABASE/quick_populate_app_places_from_legacy_database_sql.sql}"
+SEEDS_DIR="${SEEDS_DIR:-$REPO_DATABASE/seeds}"
 
 mysql_cmd() {
   export MYSQL_PWD="$MYSQL_PASSWORD"
@@ -185,6 +186,19 @@ if [[ "$(table_exists destinations)" != "0" ]] \
   && [[ -f "$QUICK_POPULATE_SQL" ]]; then
   echo "+ quick populate app_places from legacy destinations"
   run_sql_file "$QUICK_POPULATE_SQL"
+fi
+
+if [[ "$(table_exists app_places)" != "0" ]] \
+  && [[ "$(row_count app_places)" == "0" ]] \
+  && [[ -d "$SEEDS_DIR" ]]; then
+  shopt -s nullglob
+  seed_files=("$SEEDS_DIR"/[0-9][0-9][0-9]_*.sql)
+  if [[ ${#seed_files[@]} -gt 0 ]]; then
+    echo "+ seed minimal demo app_places (empty table fallback)"
+    for seed in "${seed_files[@]}"; do
+      run_sql_file "$seed"
+    done
+  fi
 fi
 
 echo "OK migrations applied to ${DB_NAME} on ${MYSQL_HOST}"

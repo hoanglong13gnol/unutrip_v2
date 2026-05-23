@@ -55,11 +55,13 @@ services:
       MIGRATIONS_DIR: /migrations
       LEGACY_SQL: /legacy/database.sql
       QUICK_POPULATE_SQL: /quick_populate.sql
+      SEEDS_DIR: /seeds
     volumes:
       - ./database/migrations:/migrations:ro
       - ./database/scripts/run_migrations.sh:/run_migrations.sh:ro
       - ./backend/nodejs/database.sql:/legacy/database.sql:ro
       - ./database/quick_populate_app_places_from_legacy_database_sql.sql:/quick_populate.sql:ro
+      - ./database/seeds:/seeds:ro
     command: ["bash", "-c", "sed 's/\\r$//' /run_migrations.sh > /tmp/run_migrations.sh && bash /tmp/run_migrations.sh"]
     restart: "no"
 

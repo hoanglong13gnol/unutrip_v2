@@ -89,6 +89,7 @@ jobs:
           MIGRATIONS_DIR: ${{ github.workspace }}/database/migrations
           LEGACY_SQL: ${{ github.workspace }}/backend/nodejs/database.sql
           QUICK_POPULATE_SQL: ${{ github.workspace }}/database/quick_populate_app_places_from_legacy_database_sql.sql
+          SEEDS_DIR: ${{ github.workspace }}/database/seeds
         run: bash database/scripts/run_migrations.sh
       - name: Assert app_places populated
         run: |

@@ -152,9 +152,9 @@ curl -sf http://localhost:3000/api/health/ready
 
 | Bước | File | Chi tiết |
 |------|------|----------|
-| 1 | Tạo `database/seeds/001_minimal_demo.sql` | 5–10 `app_places`, 1 user test, vài `place_images` |
-| 2 | `run_migrations.sh` hoặc `db-migrate` | Chạy seed nếu `app_places` COUNT = 0 |
-| 3 | Document credentials | user demo trong comment seed (không commit password thật prod) |
+| 1 | `database/seeds/001_minimal_demo.sql` | 5 `app_places` demo (IDs 9001–9005) — **DONE** |
+| 2 | `run_migrations.sh` | Chạy seed nếu `app_places` COUNT = 0 sau quick_populate |
+| 3 | `docker-compose.yml` | Mount `./database/seeds:/seeds:ro` + `SEEDS_DIR` |
 
 ---
 
@@ -539,8 +539,9 @@ cd backend/nodejs && npm test && npm run lint   # 60 pass
 | ID | Trạng thái | Chi tiết |
 |----|------------|
 | B1–B3, B6 | ✅ | Admin XSS/auth, upload, rate limit, gỡ xlsx |
-| B4 | 🔄 | `stack-smoke.yml` + `backend-ci` mysql-migrate; **fix trigger `master`** (2026-05-23) |
-| B5 | 🔄 | Thêm `itineraries.service.test.js` (create + distribute destinations) |
+| B4 | 🔄 | `stack-smoke.yml` + `backend-ci` mysql-migrate; fix trigger `master` (`d9caa42`) |
+| B5 | 🔄 | `itineraries.service.test.js`, `destinations.routes.test.js`, `reviews.routes.test.js` — **68** Vitest pass |
+| A2.3 | ✅ | `database/seeds/001_minimal_demo.sql` — fallback khi `app_places` rỗng sau migrate |
 
 **Verify Node (PC agent):**
 ```bash
