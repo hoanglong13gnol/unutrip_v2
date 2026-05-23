@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "0 4 * * 1"
   pull_request:
-    branches: [main]
+    branches: [master, main]
     paths:
       - "backend/**"
       - "database/**"
@@ -14,7 +14,7 @@ on:
       - ".env.example"
       - ".github/workflows/stack-smoke.yml"
   push:
-    branches: [main]
+    branches: [master, main]
     paths:
       - "backend/**"
       - "database/**"

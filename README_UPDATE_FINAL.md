@@ -104,10 +104,33 @@ docker compose logs db-migrate | tail -20  # no ERROR on 006
 ```
 
 > **Verify A2 — môi trường dev (2026-05-23)**  
-> Code A2 đã implement trên repo (xem commit Phase A). **Chưa verify runtime trên PC agent** — PC workspace không có Docker/WSL.  
-> **Verify trên laptop** (hoặc PC sau khi cài Docker Desktop): pull branch mới → chạy lệnh Acceptance + `/health/ready` ở A2.2.  
-> Gửi output `docker compose ps`, `db-migrate` logs, curl nếu fail để debug tiếp.  
-> A2.3 (seed demo) — optional, chưa làm.
+> Code A2 **DONE** trên repo (migrate skip legacy, quick_populate clamp rating, RAG Dockerfile bake BM25 in-process `d703e82`).  
+> **Runtime verify — DEFER:** chỉ chạy **1 lần** khi **project final** xong → laptop `git pull` → `docker compose down -v` (hoặc giữ DB) → `build --no-cache` → `up`.  
+> **Không block** dev PC (pytest/Android). Checklist laptop: §8.1 A2.
+
+### A2.4 Chính sách verify (2026-05-23)
+
+| Giai đoạn | Docker |
+|-----------|--------|
+| Đang sửa code final (PC) | **Không bắt buộc** — `pytest` / `npm test` / Gradle đủ |
+| Milestone demo / bảo vệ (laptop) | **Clean build 1 lần** trên commit final |
+
+**Commits A2 chính:** `run_migrations.sh` skip 006–009 + quick populate; `fb38f43` rating clamp; RAG `build_rag_artifacts.py` in-process `d703e82`; `core/__init__.py`.
+
+**Lệnh demo final (laptop):**
+
+```powershell
+cd D:\UNUtrip_v2
+git fetch origin && git reset --hard origin/master
+cp .env.example .env   # GEMINI_API_KEY, JWT_SECRET
+$env:DOCKER_BUILDKIT=1
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+docker compose logs db-migrate
+docker compose logs rag --tail 30
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke_staging_e2e.ps1
+```
 
 ### A2.2 RAG artifact — `/health/ready` 200 out-of-box
 
@@ -493,16 +516,16 @@ bash scripts/smoke_staging_e2e.sh
 
 # 8. SESSION LOG — tiến độ agent (tránh mất context khi limit token)
 
-> **Cập nhật:** 2026-05-23 · Agent chạy trên **PC workspace** (`E:\UNUtrip_v2`).  
-> **Docker A2:** **BỎ QUA / DEFER** — verify trên laptop khi cần; code A2 đã commit trong repo.
+> **Cập nhật:** 2026-05-23 · Agent PC (`E:\UNUtrip_v2`).  
+> **A2 Docker:** code ✅ · **runtime verify DEFER** → clean build trên laptop khi project final (§A2.4).
 
-## 8.1 Phase A — DONE (trừ Docker verify)
+## 8.1 Phase A — DONE (A2 runtime verify deferred)
 
 | ID | Trạng thái | Chi tiết |
 |----|------------|----------|
 | A1.1 | ✅ | `test_rag_pipeline_unit.py`: `province_norm_override=None` trong assert |
 | A1.2 | ✅ | Node 60/60: `adminAuth` stub env + `ALLOW_ADMIN_OPEN`; `env.v2PlaceFlags` mock dotenv; `ai-rag-chat` guest 200 |
-| A2 | ⏸️ code ✅ verify ⏸️ | `run_migrations.sh` skip 006–009 legacy + quick populate; RAG Dockerfile `--from-fixture`; compose `rag` health `/health/ready`; **2026-05-23 fix:** `build_rag_artifacts.py` in-process import (không subprocess) + `core/__init__.py` — chờ laptop `docker compose build rag` |
+| A2 | ✅ code · ⏸️ verify | Migrate + quick_populate + RAG Dockerfile in-process (`d703e82`). **Verify laptop:** chỉ khi final demo — §A2.4 |
 | A3 | ✅ | Xóa `[NEARBY]`, AI raw log; `RetrofitClient` error body chỉ DEBUG |
 
 **Verify PC (không Docker):**
@@ -511,18 +534,13 @@ cd backend/rag && python -m pytest tests/ -q    # 138 pass
 cd backend/nodejs && npm test && npm run lint   # 60 pass
 ```
 
-## 8.2 Phase B — DONE (CI chưa chạy trên GitHub)
+## 8.2 Phase B — IN PROGRESS (B4 CI + B5 tests)
 
-| ID | File chính |
+| ID | Trạng thái | Chi tiết |
 |----|------------|
-| B1.1 | `dashboard.admin.routes.js` + `tests/admin.dashboard.xss.test.js` |
-| B1.2 | `adminAuth.middleware.js`: passthrough chỉ `development` + `ALLOW_ADMIN_OPEN=true`; `env.js` prod bắt `ADMIN_BASIC_*` |
-| B1.3 | `admin/_shared/adminErrors.js`; users/destinations/reviews admin routes |
-| B2 | `shared/http/upload.js` magic bytes + `validateUploadedImageFiles`; `tests/upload.security.test.js` |
-| B3 | password min 8; `getCorsOriginConfig()` prod; `aiRateLimit.middleware.js`; `ai.controller.js` 502 leak |
-| B3.1 | RAG `rate_limit_middleware.py` POST `/chat` |
-| B4 | `.github/workflows/stack-smoke.yml`; `backend-ci.yml` job `mysql-migrate` |
-| B6 | Gỡ `xlsx` khỏi `package.json` |
+| B1–B3, B6 | ✅ | Admin XSS/auth, upload, rate limit, gỡ xlsx |
+| B4 | 🔄 | `stack-smoke.yml` + `backend-ci` mysql-migrate; **fix trigger `master`** (2026-05-23) |
+| B5 | 🔄 | Thêm `itineraries.service.test.js` (create + distribute destinations) |
 
 **Verify Node (PC agent):**
 ```bash
@@ -562,9 +580,8 @@ Node → MySQL app_places | RAG → BM25 disk + Gemini (không ghi DB app)
 
 ## 8.6 Việc KHÔNG làm (unless user asks)
 
-- Docker verify trên PC agent
+- Docker verify trên PC agent (chờ final demo laptop)
 - Đổi `/api/destinations` → `/places`
-- Commit / push / PR tự ý
 
 ---
 
