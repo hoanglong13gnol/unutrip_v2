@@ -11,12 +11,16 @@ COPY pyproject.toml README.md ./
 COPY app core domain generation llm pipelines providers repositories retrieval services ./
 
 RUN pip install --no-cache-dir --upgrade pip \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir .
 
 COPY jobs scripts eval data ./
 COPY tests/fixtures ./tests/fixtures
-RUN pip install --no-cache-dir --no-deps -e. \
-    && python jobs/build_rag_artifacts.py --from-fixture \
+RUN test -f tests/fixtures/rag_corpus_sample.jsonl \
+    && test -f tests/fixtures/places_app_sample.json \
+    && pip install --no-cache-dir --no-deps -e . \
     && chmod +x scripts/docker_entrypoint.sh
 
 EXPOSE 8001
